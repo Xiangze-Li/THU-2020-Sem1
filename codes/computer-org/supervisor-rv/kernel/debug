@@ -1,0 +1,2 @@
+#!/bin/sh
+qemu-system-riscv32 -M virt -m 32M -kernel kernel.elf -vnc :0 -serial tcp::6666,server -S -s
