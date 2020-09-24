@@ -4,8 +4,10 @@ import json
 from .models import User, Message
 from django.core.exceptions import ValidationError
 
-# Create your views here.
-def message(request):
+# TODO: Create your views here.
+
+
+def message(request: HttpResponse):
     def gen_response(code: int, data: str):
         return JsonResponse({
             'code': code,
@@ -22,22 +24,25 @@ def message(request):
             return gen_response(400, '{} is not a number'.format(offset))
 
         return gen_response(200, [
-                {
-                    'title': msg.title,
-                    'content': msg.content,
-                    'user': msg.user.name,
-                    'timestamp': int(msg.pub_date.timestamp())
-                }
-                for msg in Message.objects.all().order_by('-pk')[int(offset) : int(offset) + int(limit)]
-            ])
+            {
+                'title': msg.title,
+                'content': msg.content,
+                'user': msg.user.name,
+                'timestamp': int(msg.pub_date.timestamp())
+            }
+            for msg in Message.objects.all().order_by('-pk')[int(offset): int(offset) + int(limit)]
+        ])
 
     elif request.method == 'POST':
+
+        # print(request.COOKIES, request.body)
+
         # 从cookie中获得user的名字，如果user不存在则新建一个
         # 如果cookie中没有user则使用"Unknown"作为默认用户名
         name = request.COOKIES['user'] if 'user' in request.COOKIES else 'Unknown'
         user = User.objects.filter(name=name).first()
         if not user:
-            user = User(name = name)
+            user = User(name=name)
             try:
                 # 注意在调用full_clean()时Django会自动检测字段的有效性，这个有效性检测包括检测CharField是否满足最大长度限制
                 user.full_clean()
@@ -46,16 +51,23 @@ def message(request):
             except ValidationError as e:
                 return gen_response(400, "Validation Error of user: {}".format(e))
 
-
-        # 验证请求的数据格式是否符合JSON规范(请求体可通过json.loads()即可），如果不符合则返回code 400，data字段内容自定义即可
-		# --------------------------------------------------------------------------------------------
-
-
+        # [+] TODO: 验证请求的数据格式是否符合JSON规范(请求体可通过json.loads()即可），如果不符合则返回code 400，data字段内容自定义即可
+        # --------------------------------------------------------------------------------------------
         # 验证请求数据是否满足接口要求，若通过所有的验证，则将新的消息添加到数据库中。如果不符合要求则返回code 400，data字段内容自定义即可
         # PS: 请求数据体应该为{"title": "something", "content": "someting"} ，请确保title和content字段存在，并且title和content均有最大长度限制
-		# PS: 检测方式可以参考user，使用Django提供的full_clean()方法进行检测
+        # PS: 检测方式可以参考user，使用Django提供的full_clean()方法进行检测
         # --------------------------------------------------------------------------------------------
 
+        body = json.loads(request.body)
+        try:
+            msg = Message(
+                user=user, title=body["title"], content=body["content"])
+            msg.full_clean()
+            msg.save()
+        except ValidationError as e:
+            return gen_response(400, "Validation Error of message: {}".format(e))
+        except KeyError as e:
+            return gen_response(400, "Key Error: {}".format(e))
 
         # 添加成功返回code 201
         return gen_response(201, "message was sent successfully")

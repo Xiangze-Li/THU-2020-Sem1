@@ -17,7 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    # 利用include()函数为board应用添加前缀为api的路由
+    # [+] TODO 利用include()函数为board应用添加前缀为api的路由
     # ----------------------------------------------
+    path("api/", include("board.urls")),
     path('admin/', admin.site.urls),
 ]

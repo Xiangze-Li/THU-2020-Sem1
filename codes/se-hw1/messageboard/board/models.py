@@ -11,10 +11,13 @@ class User(models.Model):
 
 class Message(models.Model):
     # ----------------------------------------------------------------
-    # 完善Message模型的代码，共有四个字段
+    # [+] TODO: 完善Message模型的代码，共有四个字段
     # user: ForeignKey, on_delete策略使用CASCADE
     # title: CharField, max_length=100
     # content: CharField, max_length=500
     # pub_date: DateTimeField, auto_now_add=True
     # ----------------------------------------------------------------
-    pass
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    content = models.CharField(max_length=500)
+    pub_date = models.DateTimeField(auto_now_add=True)
