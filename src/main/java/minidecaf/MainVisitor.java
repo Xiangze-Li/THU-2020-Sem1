@@ -36,11 +36,11 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         if (currentFunc.equals("main")) containsMain = true;
 
         // sb.append("\t.text\n") // 表示以下内容在 text 段中
-        //         .append("\t.global " + currentFunc + "\n") // 让该 label 对链接器可见
-        //         .append(currentFunc + ":\n");
-        
+        // .append("\t.global " + currentFunc + "\n") // 让该 label 对链接器可见
+        // .append(currentFunc + ":\n");
+
         sb.append("func " + currentFunc + ":\n");
-        
+
         visit(ctx.statement());
 
         return new NoType();
@@ -52,7 +52,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         visit(ctx.expr());
 
         sb.append("\tret\n");
-        
+
         return new NoType();
     }
 

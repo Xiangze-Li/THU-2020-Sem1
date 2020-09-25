@@ -23,10 +23,10 @@ null
 null
 null
 WS
-COMMENT
+LONG_COMMENT
 LINE_COMMENT
 IDENT
-NUM
+INTEGER
 
 rule names:
 program
