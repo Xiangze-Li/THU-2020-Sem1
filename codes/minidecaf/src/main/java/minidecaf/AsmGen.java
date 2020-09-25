@@ -18,18 +18,13 @@ public class AsmGen
         {
             while (irIn.hasNextLine())
             {
-                String line = irIn.nextLine().strip();
-
-                if (line.endsWith(":"))
-                {
-                    doLabel(sb, line);
-                    continue;
-                }
-
-                String[] sp = line.split(" ");
+                String[] sp = irIn.nextLine().strip().split(" ");
 
                 switch (sp[0])
                 {
+                    case "func" :
+                        doFunc(sb, sp[1]);
+                        break;
                     case "push" :
                         doPush(sb, sp[1]);
                         break;
@@ -43,6 +38,11 @@ public class AsmGen
         }
 
         return sb.toString();
+    }
+
+    private static void doFunc(final StringBuilder sb, final String label) {
+        sb.append("\t.text\n\t.global " + label.substring(0, label.length() - 2) + "\n");
+        doLabel(sb, label);
     }
 
     private static void doLabel(final StringBuilder sb, final String label)
