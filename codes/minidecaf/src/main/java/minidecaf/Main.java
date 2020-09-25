@@ -34,6 +34,7 @@ public class Main
         try (FileWriter writer = new FileWriter(args[1]))
         {
             writer.write(asm);
+            System.out.println(asm);
         }
         catch (IOException e)
         {

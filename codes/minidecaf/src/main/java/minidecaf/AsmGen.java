@@ -41,7 +41,7 @@ public class AsmGen
     }
 
     private static void doFunc(final StringBuilder sb, final String label) {
-        sb.append("\t.text\n\t.global " + label.substring(0, label.length() - 2) + "\n");
+        sb.append("\t.text\n\t.global " + label.substring(0, label.length() - 1) + "\n");
         doLabel(sb, label);
     }
 
