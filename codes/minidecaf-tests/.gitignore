@@ -1,0 +1,9 @@
+# generated files
+
+*.s
+*.actual
+*.expected
+*.gcc
+*.my
+*.err
+no_compiler_set
