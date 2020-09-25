@@ -24,6 +24,7 @@ generateGrammarSource {
 }
 
 sourceSets.main.java.srcDirs += "${buildDir}/generated-src/antlr/main"
+sourceSets.main.java.srcDirs += "build/generated-src/antlr/main"
 
 compileJava.options.encoding = "UTF-8"
 
