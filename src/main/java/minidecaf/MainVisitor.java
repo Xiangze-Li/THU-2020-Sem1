@@ -8,7 +8,12 @@ import org.antlr.v4.runtime.tree.*;
 
 public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 {
-    private StringBuilder sb; // 生成的目标汇编代码
+    /* 函数相关 */
+    private String currentFunc;
+    private boolean containsMain = false;
+
+    private StringBuilder sb; // 生成的IR
+
     MainVisitor(StringBuilder sb)
     {
         this.sb = sb;
@@ -30,39 +35,41 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         currentFunc = ctx.IDENT().getText();
         if (currentFunc.equals("main")) containsMain = true;
 
-        sb.append("\t.text\n") // 表示以下内容在 text 段中
-                .append("\t.global " + currentFunc + "\n") // 让该 label 对链接器可见
-                .append(currentFunc + ":\n");
+        // sb.append("\t.text\n") // 表示以下内容在 text 段中
+        //         .append("\t.global " + currentFunc + "\n") // 让该 label 对链接器可见
+        //         .append(currentFunc + ":\n");
+        
+        sb.append("func " + currentFunc + ":\n");
+        
         visit(ctx.statement());
 
         return new NoType();
     }
 
     @Override
-    public Type visitStatement(StatementContext ctx)
+    public Type visitReturnStatement(ReturnStatementContext ctx)
     {
         visit(ctx.expr());
-        // 函数返回，返回值存在 a0 中
+
         sb.append("\tret\n");
+        
         return new NoType();
     }
 
     @Override
     public Type visitExpr(ExprContext ctx)
     {
-        TerminalNode num = ctx.NUM();
+        TerminalNode num = ctx.INTEGER();
 
         // 数字字面量不能超过整型的最大值
         if (compare(Integer.toString(Integer.MAX_VALUE), num.getText()) == -1) reportError("too large number", ctx);
 
-        sb.append("# number " + num.getText() + "\n").append("\tli a0, " + num.getText() + "\n");
+        // sb.append("# number " + num.getText() + "\n").append("\tli a0, " + num.getText() + "\n");
+
+        sb.append("\tpush " + num.getText() + "\n");
 
         return new IntType();
     }
-
-    /* 函数相关 */
-    private String currentFunc;
-    private boolean containsMain = false;
 
     /* 一些工具方法 */
     /**
