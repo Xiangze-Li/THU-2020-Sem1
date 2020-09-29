@@ -7,5 +7,3 @@ thinpad_top.runs/
 /.lint/
 /.Xil
 /.Xilinx
-vivado_pid*.str
-thinpad_top.xpr
