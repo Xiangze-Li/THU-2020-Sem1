@@ -1,58 +1,59 @@
 `default_nettype none
 
-module thinpad_top(
-    input wire clk_50M,           //50MHz æ—¶é’Ÿè¾“å…¥
-    input wire clk_11M0592,       //11.0592MHz æ—¶é’Ÿè¾“å…¥ï¼ˆå¤‡ç”¨ï¼Œå¯ä¸ç”¨ï¼‰
+module thinpad_top
+(
+    input wire clk_50M,           //50MHz Ê±ÖÓÊäÈë
+    input wire clk_11M0592,       //11.0592MHz Ê±ÖÓÊäÈë£¨±¸ÓÃ£¬¿É²»ÓÃ£©
 
-    input wire clock_btn,         //BTN5æ‰‹åŠ¨æ—¶é’ŸæŒ‰é’®å¼€å…³ï¼Œå¸¦æ¶ˆæŠ–ç”µè·¯ï¼ŒæŒ‰ä¸‹æ—¶ä¸º1
-    input wire reset_btn,         //BTN6æ‰‹åŠ¨å¤ä½æŒ‰é’®å¼€å…³ï¼Œå¸¦æ¶ˆæŠ–ç”µè·¯ï¼ŒæŒ‰ä¸‹æ—¶ä¸º1
+    input wire clock_btn,         //BTN5ÊÖ¶¯Ê±ÖÓ°´Å¥¿ª¹Ø£¬´øÏû¶¶µçÂ·£¬°´ÏÂÊ±Îª1
+    input wire reset_btn,         //BTN6ÊÖ¶¯¸´Î»°´Å¥¿ª¹Ø£¬´øÏû¶¶µçÂ·£¬°´ÏÂÊ±Îª1
 
-    input  wire[3:0]  touch_btn,  //BTN1~BTN4ï¼ŒæŒ‰é’®å¼€å…³ï¼ŒæŒ‰ä¸‹æ—¶ä¸º1
-    input  wire[31:0] dip_sw,     //32ä½æ‹¨ç å¼€å…³ï¼Œæ‹¨åˆ°"ON"æ—¶ä¸º1
-    output wire[15:0] leds,       //16ä½LEDï¼Œè¾“å‡ºæ—¶1ç‚¹äº®
-    output wire[7:0]  dpy0,       //æ•°ç ç®¡ä½ä½ä¿¡å·ï¼ŒåŒ…æ‹¬å°æ•°ç‚¹ï¼Œè¾“å‡º1ç‚¹äº®
-    output wire[7:0]  dpy1,       //æ•°ç ç®¡é«˜ä½ä¿¡å·ï¼ŒåŒ…æ‹¬å°æ•°ç‚¹ï¼Œè¾“å‡º1ç‚¹äº®
+    input  wire[3:0]  touch_btn,  //BTN1~BTN4£¬°´Å¥¿ª¹Ø£¬°´ÏÂÊ±Îª1
+    input  wire[31:0] dip_sw,     //32Î»²¦Âë¿ª¹Ø£¬²¦µ½"ON"Ê±Îª1
+    output wire[15:0] leds,       //16Î»LED£¬Êä³öÊ±1µãÁÁ
+    output wire[7:0]  dpy0,       //ÊıÂë¹ÜµÍÎ»ĞÅºÅ£¬°üÀ¨Ğ¡Êıµã£¬Êä³ö1µãÁÁ
+    output wire[7:0]  dpy1,       //ÊıÂë¹Ü¸ßÎ»ĞÅºÅ£¬°üÀ¨Ğ¡Êıµã£¬Êä³ö1µãÁÁ
 
-    //CPLDä¸²å£æ§åˆ¶å™¨ä¿¡å·
-    output wire uart_rdn,         //è¯»ä¸²å£ä¿¡å·ï¼Œä½æœ‰æ•ˆ
-    output wire uart_wrn,         //å†™ä¸²å£ä¿¡å·ï¼Œä½æœ‰æ•ˆ
-    input wire uart_dataready,    //ä¸²å£æ•°æ®å‡†å¤‡å¥½
-    input wire uart_tbre,         //å‘é€æ•°æ®æ ‡å¿—
-    input wire uart_tsre,         //æ•°æ®å‘é€å®Œæ¯•æ ‡å¿—
+    //CPLD´®¿Ú¿ØÖÆÆ÷ĞÅºÅ
+    output wire uart_rdn,         //¶Á´®¿ÚĞÅºÅ£¬µÍÓĞĞ§
+    output wire uart_wrn,         //Ğ´´®¿ÚĞÅºÅ£¬µÍÓĞĞ§
+    input wire uart_dataready,    //´®¿ÚÊı¾İ×¼±¸ºÃ
+    input wire uart_tbre,         //·¢ËÍÊı¾İ±êÖ¾
+    input wire uart_tsre,         //Êı¾İ·¢ËÍÍê±Ï±êÖ¾
 
-    //BaseRAMä¿¡å·
-    inout wire[31:0] base_ram_data,  //BaseRAMæ•°æ®ï¼Œä½8ä½ä¸CPLDä¸²å£æ§åˆ¶å™¨å…±äº«
-    output wire[19:0] base_ram_addr, //BaseRAMåœ°å€
-    output wire[3:0] base_ram_be_n,  //BaseRAMå­—èŠ‚ä½¿èƒ½ï¼Œä½æœ‰æ•ˆã€‚å¦‚æœä¸ä½¿ç”¨å­—èŠ‚ä½¿èƒ½ï¼Œè¯·ä¿æŒä¸º0
-    output wire base_ram_ce_n,       //BaseRAMç‰‡é€‰ï¼Œä½æœ‰æ•ˆ
-    output wire base_ram_oe_n,       //BaseRAMè¯»ä½¿èƒ½ï¼Œä½æœ‰æ•ˆ
-    output wire base_ram_we_n,       //BaseRAMå†™ä½¿èƒ½ï¼Œä½æœ‰æ•ˆ
+    //BaseRAMĞÅºÅ
+    inout wire[31:0] base_ram_data,  //BaseRAMÊı¾İ£¬µÍ8Î»ÓëCPLD´®¿Ú¿ØÖÆÆ÷¹²Ïí
+    output wire[19:0] base_ram_addr, //BaseRAMµØÖ·
+    output wire[3:0] base_ram_be_n,  //BaseRAM×Ö½ÚÊ¹ÄÜ£¬µÍÓĞĞ§¡£Èç¹û²»Ê¹ÓÃ×Ö½ÚÊ¹ÄÜ£¬Çë±£³ÖÎª0
+    output wire base_ram_ce_n,       //BaseRAMÆ¬Ñ¡£¬µÍÓĞĞ§
+    output wire base_ram_oe_n,       //BaseRAM¶ÁÊ¹ÄÜ£¬µÍÓĞĞ§
+    output wire base_ram_we_n,       //BaseRAMĞ´Ê¹ÄÜ£¬µÍÓĞĞ§
 
-    //ExtRAMä¿¡å·
-    inout wire[31:0] ext_ram_data,  //ExtRAMæ•°æ®
-    output wire[19:0] ext_ram_addr, //ExtRAMåœ°å€
-    output wire[3:0] ext_ram_be_n,  //ExtRAMå­—èŠ‚ä½¿èƒ½ï¼Œä½æœ‰æ•ˆã€‚å¦‚æœä¸ä½¿ç”¨å­—èŠ‚ä½¿èƒ½ï¼Œè¯·ä¿æŒä¸º0
-    output wire ext_ram_ce_n,       //ExtRAMç‰‡é€‰ï¼Œä½æœ‰æ•ˆ
-    output wire ext_ram_oe_n,       //ExtRAMè¯»ä½¿èƒ½ï¼Œä½æœ‰æ•ˆ
-    output wire ext_ram_we_n,       //ExtRAMå†™ä½¿èƒ½ï¼Œä½æœ‰æ•ˆ
+    //ExtRAMĞÅºÅ
+    inout wire[31:0] ext_ram_data,  //ExtRAMÊı¾İ
+    output wire[19:0] ext_ram_addr, //ExtRAMµØÖ·
+    output wire[3:0] ext_ram_be_n,  //ExtRAM×Ö½ÚÊ¹ÄÜ£¬µÍÓĞĞ§¡£Èç¹û²»Ê¹ÓÃ×Ö½ÚÊ¹ÄÜ£¬Çë±£³ÖÎª0
+    output wire ext_ram_ce_n,       //ExtRAMÆ¬Ñ¡£¬µÍÓĞĞ§
+    output wire ext_ram_oe_n,       //ExtRAM¶ÁÊ¹ÄÜ£¬µÍÓĞĞ§
+    output wire ext_ram_we_n,       //ExtRAMĞ´Ê¹ÄÜ£¬µÍÓĞĞ§
 
-    //ç›´è¿ä¸²å£ä¿¡å·
-    output wire txd,  //ç›´è¿ä¸²å£å‘é€ç«¯
-    input  wire rxd,  //ç›´è¿ä¸²å£æ¥æ”¶ç«¯
+    //Ö±Á¬´®¿ÚĞÅºÅ
+    output wire txd,  //Ö±Á¬´®¿Ú·¢ËÍ¶Ë
+    input  wire rxd,  //Ö±Á¬´®¿Ú½ÓÊÕ¶Ë
 
-    //Flashå­˜å‚¨å™¨ä¿¡å·ï¼Œå‚è€ƒ JS28F640 èŠ¯ç‰‡æ‰‹å†Œ
-    output wire [22:0]flash_a,      //Flashåœ°å€ï¼Œa0ä»…åœ¨8bitæ¨¡å¼æœ‰æ•ˆï¼Œ16bitæ¨¡å¼æ— æ„ä¹‰
-    inout  wire [15:0]flash_d,      //Flashæ•°æ®
-    output wire flash_rp_n,         //Flashå¤ä½ä¿¡å·ï¼Œä½æœ‰æ•ˆ
-    output wire flash_vpen,         //Flashå†™ä¿æŠ¤ä¿¡å·ï¼Œä½ç”µå¹³æ—¶ä¸èƒ½æ“¦é™¤ã€çƒ§å†™
-    output wire flash_ce_n,         //Flashç‰‡é€‰ä¿¡å·ï¼Œä½æœ‰æ•ˆ
-    output wire flash_oe_n,         //Flashè¯»ä½¿èƒ½ä¿¡å·ï¼Œä½æœ‰æ•ˆ
-    output wire flash_we_n,         //Flashå†™ä½¿èƒ½ä¿¡å·ï¼Œä½æœ‰æ•ˆ
-    output wire flash_byte_n,       //Flash 8bitæ¨¡å¼é€‰æ‹©ï¼Œä½æœ‰æ•ˆã€‚åœ¨ä½¿ç”¨flashçš„16ä½æ¨¡å¼æ—¶è¯·è®¾ä¸º1
+    //Flash´æ´¢Æ÷ĞÅºÅ£¬²Î¿¼ JS28F640 Ğ¾Æ¬ÊÖ²á
+    output wire [22:0]flash_a,      //FlashµØÖ·£¬a0½öÔÚ8bitÄ£Ê½ÓĞĞ§£¬16bitÄ£Ê½ÎŞÒâÒå
+    inout  wire [15:0]flash_d,      //FlashÊı¾İ
+    output wire flash_rp_n,         //Flash¸´Î»ĞÅºÅ£¬µÍÓĞĞ§
+    output wire flash_vpen,         //FlashĞ´±£»¤ĞÅºÅ£¬µÍµçÆ½Ê±²»ÄÜ²Á³ı¡¢ÉÕĞ´
+    output wire flash_ce_n,         //FlashÆ¬Ñ¡ĞÅºÅ£¬µÍÓĞĞ§
+    output wire flash_oe_n,         //Flash¶ÁÊ¹ÄÜĞÅºÅ£¬µÍÓĞĞ§
+    output wire flash_we_n,         //FlashĞ´Ê¹ÄÜĞÅºÅ£¬µÍÓĞĞ§
+    output wire flash_byte_n,       //Flash 8bitÄ£Ê½Ñ¡Ôñ£¬µÍÓĞĞ§¡£ÔÚÊ¹ÓÃflashµÄ16Î»Ä£Ê½Ê±ÇëÉèÎª1
 
-    //USB æ§åˆ¶å™¨ä¿¡å·ï¼Œå‚è€ƒ SL811 èŠ¯ç‰‡æ‰‹å†Œ
+    //USB ¿ØÖÆÆ÷ĞÅºÅ£¬²Î¿¼ SL811 Ğ¾Æ¬ÊÖ²á
     output wire sl811_a0,
-    //inout  wire[7:0] sl811_d,     //USBæ•°æ®çº¿ä¸ç½‘ç»œæ§åˆ¶å™¨çš„dm9k_sd[7:0]å…±äº«
+    //inout  wire[7:0] sl811_d,     //USBÊı¾İÏßÓëÍøÂç¿ØÖÆÆ÷µÄdm9k_sd[7:0]¹²Ïí
     output wire sl811_wr_n,
     output wire sl811_rd_n,
     output wire sl811_cs_n,
@@ -61,7 +62,7 @@ module thinpad_top(
     input  wire sl811_intrq,
     input  wire sl811_drq_n,
 
-    //ç½‘ç»œæ§åˆ¶å™¨ä¿¡å·ï¼Œå‚è€ƒ DM9000A èŠ¯ç‰‡æ‰‹å†Œ
+    //ÍøÂç¿ØÖÆÆ÷ĞÅºÅ£¬²Î¿¼ DM9000A Ğ¾Æ¬ÊÖ²á
     output wire dm9k_cmd,
     inout  wire[15:0] dm9k_sd,
     output wire dm9k_iow_n,
@@ -70,170 +71,128 @@ module thinpad_top(
     output wire dm9k_pwrst_n,
     input  wire dm9k_int,
 
-    //å›¾åƒè¾“å‡ºä¿¡å·
-    output wire[2:0] video_red,    //çº¢è‰²åƒç´ ï¼Œ3ä½
-    output wire[2:0] video_green,  //ç»¿è‰²åƒç´ ï¼Œ3ä½
-    output wire[1:0] video_blue,   //è“è‰²åƒç´ ï¼Œ2ä½
-    output wire video_hsync,       //è¡ŒåŒæ­¥ï¼ˆæ°´å¹³åŒæ­¥ï¼‰ä¿¡å·
-    output wire video_vsync,       //åœºåŒæ­¥ï¼ˆå‚ç›´åŒæ­¥ï¼‰ä¿¡å·
-    output wire video_clk,         //åƒç´ æ—¶é’Ÿè¾“å‡º
-    output wire video_de           //è¡Œæ•°æ®æœ‰æ•ˆä¿¡å·ï¼Œç”¨äºåŒºåˆ†æ¶ˆéšåŒº
+    //Í¼ÏñÊä³öĞÅºÅ
+    output wire[2:0] video_red,    //ºìÉ«ÏñËØ£¬3Î»
+    output wire[2:0] video_green,  //ÂÌÉ«ÏñËØ£¬3Î»
+    output wire[1:0] video_blue,   //À¶É«ÏñËØ£¬2Î»
+    output wire video_hsync,       //ĞĞÍ¬²½£¨Ë®Æ½Í¬²½£©ĞÅºÅ
+    output wire video_vsync,       //³¡Í¬²½£¨´¹Ö±Í¬²½£©ĞÅºÅ
+    output wire video_clk,         //ÏñËØÊ±ÖÓÊä³ö
+    output wire video_de           //ĞĞÊı¾İÓĞĞ§ĞÅºÅ£¬ÓÃÓÚÇø·ÖÏûÒşÇø
 );
 
-// æ•°ç ç®¡è¿æ¥å…³ç³»ç¤ºæ„å›¾ï¼Œdpy1åŒç†
-// p=dpy0[0] // ---a---
-// c=dpy0[1] // |     |
-// d=dpy0[2] // f     b
-// e=dpy0[3] // |     |
-// b=dpy0[4] // ---g---
-// a=dpy0[5] // |     |
-// f=dpy0[6] // e     c
-// g=dpy0[7] // |     |
-//           // ---d---  p
+    // ÊıÂë¹ÜÁ¬½Ó¹ØÏµÊ¾ÒâÍ¼£¬dpy1Í¬Àí
+    // p=dpy0[0] // ---a---
+    // c=dpy0[1] // |     |
+    // d=dpy0[2] // f     b
+    // e=dpy0[3] // |     |
+    // b=dpy0[4] // ---g---
+    // a=dpy0[5] // |     |
+    // f=dpy0[6] // e     c
+    // g=dpy0[7] // |     |
+    //           // ---d---  p
 
-// 7æ®µæ•°ç ç®¡è¯‘ç å™¨æ¼”ç¤ºï¼Œå°†numberç”¨16è¿›åˆ¶æ˜¾ç¤ºåœ¨æ•°ç ç®¡ä¸Šé¢
-reg[7:0] number;
-SEG7_LUT segL(.oSEG1(dpy0), .iDIG(number[3:0])); //dpy0æ˜¯ä½ä½æ•°ç ç®¡
-SEG7_LUT segH(.oSEG1(dpy1), .iDIG(number[7:4])); //dpy1æ˜¯é«˜ä½æ•°ç ç®¡
+    // 7¶ÎÊıÂë¹ÜÒëÂëÆ÷ÑİÊ¾£¬½«numberÓÃ16½øÖÆÏÔÊ¾ÔÚÊıÂë¹ÜÉÏÃæ
+    reg[7:0] number;
+    SEG7_LUT segL(.oSEG1(dpy0), .iDIG(number[3:0])); //dpy0ÊÇµÍÎ»ÊıÂë¹Ü
+    SEG7_LUT segH(.oSEG1(dpy1), .iDIG(number[7:4])); //dpy1ÊÇ¸ßÎ»ÊıÂë¹Ü
+
+    /*
+    ±¾Ê¾Àı´úÂëÒÑ¾­ÊµÏÖÁË¼Ó·¨ºÍ×óÒÆ¡£Í¬Ñ§ÃÇĞèÒª²¹³äÍêÕûÊ£ÏÂµÄ´úÂë¡£
+    Ö÷ÒªĞèÒª²¹³ä¹¤×÷°üÀ¨£º
+    1. Ôö¼Ó¹¦ÄÜÂë;
+    2. Íê³ÉËùÓĞµÄ¹¦ÄÜ²Ù×÷;
+    3. ÔÚ×´Ì¬»úµÄ²»Í¬×´Ì¬×öÏàÓ¦µÄ¶¯×÷¡£
+    ×¢Òâ£º±¾´úÂëËäÈ»¿ÉÒÔ×ÛºÏ£¬µ«ÊÇÈÔÈ»²»¿ÉÒÔÖ´ĞĞ£¬ĞèÒªÖÁÉÙÍê³É
+    ÉÏÃæ3µÄ×´Ì¬»ú²ÅÄÜ¹»ÑİÊ¾»ù±¾µÄalu¼Ó·¨ºÍ×óÒÆ¹¦ÄÜ¡£
+    */
+
+    reg[15:0] led_bits;
+    assign leds = led_bits;
+
+    //ÓĞÏŞ×´Ì¬»ú×´Ì¬Âë
+    reg[1:0] state;
+    parameter 
+        S0 = 2'b00,
+        S1 = 2'b01,
+        S2 = 2'b10,
+        S3 = 2'b11;
+
+    reg[15:0]   oprandA;
+    reg[15:0]   oprandB;
+    reg[3:0]    opCode;
+    reg[15:0]   result;
+    reg         flagOV;
 
 /*
-æœ¬ç¤ºä¾‹ä»£ç å·²ç»å®ç°äº†åŠ æ³•å’Œå·¦ç§»ã€‚åŒå­¦ä»¬éœ€è¦è¡¥å……å®Œæ•´å‰©ä¸‹çš„ä»£ç ã€‚
-ä¸»è¦éœ€è¦è¡¥å……å·¥ä½œåŒ…æ‹¬ï¼š
-1. å¢åŠ åŠŸèƒ½ç ;
-2. å®Œæˆæ‰€æœ‰çš„åŠŸèƒ½æ“ä½œ;
-3. åœ¨çŠ¶æ€æœºçš„ä¸åŒçŠ¶æ€åšç›¸åº”çš„åŠ¨ä½œã€‚
-æ³¨æ„ï¼šæœ¬ä»£ç è™½ç„¶å¯ä»¥ç»¼åˆï¼Œä½†æ˜¯ä»ç„¶ä¸å¯ä»¥æ‰§è¡Œï¼Œéœ€è¦è‡³å°‘å®Œæˆ
-ä¸Šé¢3çš„çŠ¶æ€æœºæ‰èƒ½å¤Ÿæ¼”ç¤ºåŸºæœ¬çš„aluåŠ æ³•å’Œå·¦ç§»åŠŸèƒ½ã€‚
+    // //ËÄ¸ö±êÖ¾Î»
+    // reg cf = 1'b0; //Carry Flag 
+    // reg zf = 1'b0; //Zero Flag 
+    // reg sf = 1'b0; //Signed Flag 
+    // reg vf = 1'b0; //Overflow Flag 
 */
 
-reg[15:0] led_bits;
-assign leds = led_bits;
+    ALU (opCode, oprandA, oprandB, result, flagOV);
 
-//æœ‰é™çŠ¶æ€æœºçŠ¶æ€ç 
-reg[1:0] state;
-parameter S0 = 2'b00;
-parameter S1 = 2'b01;
-parameter S2 = 2'b10;
-parameter S3 = 2'b11;
-
-// NOTE: OpCodes
-parameter:
-    // Arth : 00xx
-    OP_ADD  4'b0001,
-    OP_SUB  4'b0010,
-    // Logic: 01xx
-    OP_AND  4'b0100,
-    OP_OR   4'b0101,
-    OP_XOR  4'b0110,
-    OP_NOT  4'b0111,
-    // Shift: 10xx
-    OP_SLL  4'b1000,
-    OP_ROL  4'b1001,
-    OP_SRL  4'b1010,
-    OP_SRA  4'b1011;
-
-reg[15:0] oprandA;
-reg[15:0] oprandB;
-reg[3:0] opCode;
-reg[15:0] result;
-reg[3:0] flags;
-
-//å››ä¸ªæ ‡å¿—ä½
-reg cf = 1'b0; //Carry Flag 
-reg zf = 1'b0; //Zero Flag 
-reg sf = 1'b0; //Signed Flag 
-reg vf = 1'b0; //Overflow Flag
-
-//ä¸åŒçŠ¶æ€ä¸‹LEDæ˜¾ç¤ºçš„å†…å®¹ä¸ä¸€æ ·
-always @(*) begin
-    case(state)
-        S0: begin
-            led_bits=dip_sw;
-        end
-        S1: begin
-            led_bits=dip_sw;
-        end
-        S2: begin
-            led_bits=result;
-        end
-        S3: begin
-            led_bits=flags;
-        end
-        default:begin
-            led_bits = 16'hFFFF;
-        end
-    endcase
-end
-
-// NOTE: ALU Logics
-always @(*) begin
-    opCode=dip_sw[3:0];
-    result=0;
-    zf=0;
-    cf=0;
-    sf=0;
-    vf=0;
-    
-    case(opCode)
-        OP_ADD : begin
-            {cf, result} = oprandA + oprandB;
-            sf = result[15];
-        end
-        OP_SUB : begin
-            {cf, result} = oprandA - oprandB;
-            sf = result[15];
-        end
-        OP_ADD : begin
-            result = oprandA & oprandB;
-        end
-        OP_OR  : begin
-            result = oprandA | oprandB;
-        end
-        OP_XOR : begin
-            result = oprandA ^ oprandB;
-        end
-        OP_NOT : begin
-            result = ~oprandA;
-        end      
-        OP_SLL : begin
-            result = a << b;
-        end
-        OP_SRL : begin
-           result = a >> b; 
-        end
-        OP_SRA : begin
-            // TODO: Shift Right Arithmeticly
-        end
-        OP_ROL : begin
-            // TODO: Rotation
-        end
-        // TODO: Cauculate Flags SF and VF
-    endcase
-
-    zf = ~(|result);
-end
-// ALU
-
-// NOTE: StateMachine: Output Gen
-always@(posedge clock_btn or posedge reset_btn) begin
-    if (reset_btn) begin //å¤ä½é”®
-        number = 0;
-        state = 0;
-    end
-    else begin //è¿è¡ŒçŠ¶æ€æœº
-        case (state)
-            S0:begin
-                a = dip_sw;
-                flags = 0;
-                number = 1;
+    // NOTE: StateMachine: Output
+    //²»Í¬×´Ì¬ÏÂLEDÏÔÊ¾µÄÄÚÈİ²»Ò»Ñù
+    always @(*) begin
+        opCode = dip_sw[3:0];
+        case(state)
+            S0: begin
+                led_bits = dip_sw;
             end
-            // TODO: Fill outputs of each state
-            // S1: è¾“å…¥b
-            // S2: æ˜¾ç¤ºç»“æœ
-            // S3: æ˜¾ç¤ºcf,zf,sf,vf
+            S1: begin
+                led_bits = dip_sw;
+            end
+            S2: begin
+                led_bits = result;
+            end
+            S3: begin
+                led_bits = {15'b0, flagOV};
+            end
+            default:begin
+                led_bits = 16'hFFFF;
+            end
         endcase
-        state = state + 1;
     end
-end
+
+    // NOTE: StateMachine: NextState
+    always@(posedge clock_btn or posedge reset_btn) begin
+        if (reset_btn) begin //¸´Î»¼ü
+            number <= 8'h1;
+            state <= S0;
+            oprandA <= 16'b0;
+            oprandB <= 16'b0;
+        end
+        else begin //ÔËĞĞ×´Ì¬»ú
+            // TODO: Fill outputs of each state
+            // S1: ÊäÈëb
+            // S2: ÏÔÊ¾½á¹û
+            // S3: ÏÔÊ¾cf,zf,sf,vf
+            case (state)
+                S0 : begin
+                    oprandA <= dip_sw;
+                    number <= 8'h1;
+                end
+                S1 : begin
+                    oprandB <= dip_sw;
+                    number <= 8'h2;
+                end
+                S2 : begin
+                    number <= 8'h3;
+                    // result is connected directly to ALU submodule
+                end
+                S3 : begin
+                    number <= 8'h4;
+                    // flagOV same as above
+                end
+                default : begin
+                    // pass
+                end
+            endcase
+            state = state + 1;
+        end
+    end
 
 endmodule

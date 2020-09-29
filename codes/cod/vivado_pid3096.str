@@ -1,0 +1,277 @@
+/*
+
+Xilinx Vivado v2019.2 (64-bit) [Major: 2019, Minor: 2]
+SW Build: 2708876 on Wed Nov  6 21:40:23 MST 2019
+IP Build: 2700528 on Thu Nov  7 00:09:20 MST 2019
+
+Process ID (PID): 3096
+License: Customer
+
+Current time: 	Tue Sep 29 17:30:04 CST 2020
+Time zone: 	China Standard Time (Asia/Shanghai)
+
+OS: Windows 10
+OS Version: 10.0
+OS Architecture: amd64
+Available processors (cores): 12
+
+Screen size: 1920x1080
+Screen resolution (DPI): 100
+Available screens: 1
+Available disk space: 249 GB
+Default font: family=Dialog,name=Dialog,style=plain,size=12
+
+Java version: 	9.0.4 64-bit
+Java home: 	D:/ProgramFiles/Xilinx/Vivado/2019.2/tps/win64/jre9.0.4
+Java executable location: 	D:/ProgramFiles/Xilinx/Vivado/2019.2/tps/win64/jre9.0.4/bin/java.exe
+Java initial memory (-Xms): 	128 MB
+Java maximum memory (-Xmx):	 3 GB
+
+
+User name: 	lee_j
+User home directory: C:/Users/lee_j
+User working directory: D:/THU/codes/cod
+User country: 	CN
+User language: 	zh
+User locale: 	zh_CN
+
+RDI_BASEROOT: D:/ProgramFiles/Xilinx/Vivado
+HDI_APPROOT: D:/ProgramFiles/Xilinx/Vivado/2019.2
+RDI_DATADIR: D:/ProgramFiles/Xilinx/Vivado/2019.2/data
+RDI_BINDIR: D:/ProgramFiles/Xilinx/Vivado/2019.2/bin
+
+Vivado preferences file location: C:/Users/lee_j/AppData/Roaming/Xilinx/Vivado/2019.2/vivado.xml
+Vivado preferences directory: C:/Users/lee_j/AppData/Roaming/Xilinx/Vivado/2019.2/
+Vivado layouts directory: C:/Users/lee_j/AppData/Roaming/Xilinx/Vivado/2019.2/layouts
+PlanAhead jar file location: 	D:/ProgramFiles/Xilinx/Vivado/2019.2/lib/classes/planAhead.jar
+Vivado log file location: 	D:/THU/codes/cod/vivado.log
+Vivado journal file location: 	D:/THU/codes/cod/vivado.jou
+Engine tmp dir: 	D:/THU/codes/cod/.Xil/Vivado-3096-XiangzeLi-PC
+
+Xilinx Environment Variables
+----------------------------
+XILINX: D:/ProgramFiles/Xilinx/Vivado/2019.2/ids_lite/ISE
+XILINX_DSP: D:/ProgramFiles/Xilinx/Vivado/2019.2/ids_lite/ISE
+XILINX_PLANAHEAD: D:/ProgramFiles/Xilinx/Vivado/2019.2
+XILINX_VIVADO: D:/ProgramFiles/Xilinx/Vivado/2019.2
+XILINX_VIVADO_HLS: D:/ProgramFiles/Xilinx/Vivado/2019.2
+
+
+GUI allocated memory:	130 MB
+GUI max memory:		3,072 MB
+Engine allocated memory: 580 MB
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+*/
+
+// TclEventType: START_GUI
+// TclEventType: PROJECT_OPEN_DIALOG
+// Tcl Message: start_gui 
+// TclEventType: PROJECT_OPEN_DIALOG
+// bB (cr):  Open Project : addNotify
+// Opening Vivado Project: D:\THU\codes\cod\thinpad_top.xpr. Version: Vivado v2019.2 
+// TclEventType: DEBUG_PROBE_SET_CHANGE
+// Tcl Message: open_project D:/THU/codes/cod/thinpad_top.xpr 
+// TclEventType: MSGMGR_MOVEMSG
+// TclEventType: FILESET_TARGET_UCF_CHANGE
+// TclEventType: FILE_SET_NEW
+// TclEventType: RUN_CURRENT
+// TclEventType: PROJECT_DASHBOARD_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// TclEventType: PROJECT_DASHBOARD_GADGET_NEW
+// TclEventType: PROJECT_DASHBOARD_GADGET_CHANGE
+// HMemoryUtils.trashcanNow. Engine heap size: 580 MB. GUI used memory: 48 MB. Current time: 9/29/20, 5:30:06 PM CST
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: LOAD_FEATURE
+// TclEventType: PROJECT_NEW
+// [GUI Memory]: 108 MB (+110986kb) [00:00:19]
+// [Engine Memory]: 748 MB (+633252kb) [00:00:19]
+// [Engine Memory]: 794 MB (+8173kb) [00:00:20]
+// WARNING: HEventQueue.dispatchEvent() is taking  2063 ms.
+// Tcl Message: open_project D:/THU/codes/cod/thinpad_top.xpr 
+// Tcl Message: INFO: [Project 1-313] Project file moved from '/home/vivado/project' since last save. 
+// Tcl Message: Scanning sources... Finished scanning sources 
+// Tcl Message: INFO: [IP_Flow 19-234] Refreshing IP repositories INFO: [IP_Flow 19-1704] No user IP repositories specified INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'D:/ProgramFiles/Xilinx/Vivado/2019.2/data/ip'. 
+// Project name: thinpad_top; location: D:/THU/codes/cod; part: xc7a100tfgg676-2L
+// Tcl Message: open_project: Time (s): cpu = 00:00:10 ; elapsed = 00:00:12 . Memory (MB): peak = 828.578 ; gain = 228.332 
+dismissDialog("Open Project"); // bB (cr)
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// Tcl Message: update_compile_order -fileset sources_1 
+// Tcl Message: update_compile_order -fileset sim_1 
+// Elapsed time: 39 seconds
+expandTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, Syntax Error Files]", 1); // B (F, cr)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, Syntax Error Files, thinpad_top.v]", 2, false); // B (F, cr)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, Syntax Error Files, thinpad_top.v]", 2, false, false, false, false, false, true); // B (F, cr) - Double Click
+selectCodeEditor("thinpad_top.v", 61, 107); // ch (w, cr)
+// Elapsed time: 22 seconds
+maximizeView(PAResourceOtoP.PAViews_BASE_WORKSPACE, "BaseWorkspace"); // P (aI, cr)
+selectTab("PlanAheadTabBaseWorkspace_JideTabbedPane", (HResource) null, "Project Summary", 0); // i (h, cr)
+closeView(PAResourceOtoP.PAViews_PROJECT_SUMMARY, "Project Summary"); // v
+unMinimizeFrame(PAResourceOtoP.PAViews_SOURCES, "Sources"); // aA
+unMinimizeFrame(RDIResource.RDIViews_PROPERTIES, "Properties"); // aA
+// Elapsed time: 16 seconds
+selectCodeEditor("thinpad_top.v", 125, 254); // ch (w, cr)
+// Elapsed time: 11 seconds
+selectCodeEditor("thinpad_top.v", 63, 212); // ch (w, cr)
+// Elapsed time: 28 seconds
+selectCodeEditor("thinpad_top.v", 100, 222); // ch (w, cr)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// [Engine Memory]: 838 MB (+5162kb) [00:03:08]
+// Elapsed time: 37 seconds
+selectButton(PAResourceCommand.PACommandNames_TOGGLE_VIEW_NAV, (String) null); // E (H, cr)
+// Run Command: PAResourceCommand.PACommandNames_TOGGLE_VIEW_NAV
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// [GUI Memory]: 117 MB (+3956kb) [00:06:50]
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// Elapsed time: 322 seconds
+selectButton((HResource) null, "Code_settings"); // x (f, cr): TRUE
+selectTab(PAResourceEtoH.EditorOptions_EDITOR_OPTIONS_PANE, PAResourceEtoH.EditorOptions_GENERAL, "General", 2); // i (a, cr)
+selectButton(RDIResource.OptionsView_CLOSE, (String) null); // E (i, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+// Elapsed time: 100 seconds
+selectCodeEditor("thinpad_top.v", 138, 290); // ch (w, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+selectMenu(RDIResource.MainWinMenuMgr_LAYOUT, "Layout"); // aa (q, cr)
+dismissMenu(RDIResource.MainWinMenuMgr_LAYOUT, "Layout"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+selectMenu(RDIResource.MainWinMenuMgr_LAYOUT, "Layout"); // aa (q, cr)
+dismissMenu(RDIResource.MainWinMenuMgr_LAYOUT, "Layout"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_REPORTS, "Reports"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_REPORTS, "Reports"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // aa (q, cr)
+selectMenu(RDIResourceCommand.RDICommands_CUSTOM_COMMANDS, "Custom Commands"); // af (cr)
+selectMenuItem(RDIResourceCommand.RDICommands_SETTINGS, "Settings..."); // ai (cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // aa (q, cr)
+// Run Command: RDIResourceCommand.RDICommands_SETTINGS
+// Tcl Command: 'rdi::info_commands {device::*}'
+// Tcl Command: 'rdi::info_commands {debug::*}'
+// Tcl Command: 'rdi::info_commands {*}'
+// I (cr): Settings: addNotify
+// [Engine Memory]: 882 MB (+2404kb) [00:10:43]
+// WARNING: HEventQueue.dispatchEvent() is taking  1641 ms.
+// HMemoryUtils.trashcanNow. Engine heap size: 882 MB. GUI used memory: 73 MB. Current time: 9/29/20, 5:40:37 PM CST
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor]", 8, true); // L (E, I) - Node
+expandTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor]", 8); // L (E, I)
+// Elapsed time: 16 seconds
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Code Completion]", 9, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Syntax Checking]", 10, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Tabs]", 11, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Fonts and Colors]", 12, false); // L (E, I)
+selectComboBox(PAResourceQtoS.SettingsThemePanel_SELECT_COLORS_AND_FONT_THAT_HAVE, "Vivado Light Theme", 1); // dz (dw, I)
+selectComboBox(PAResourceQtoS.SettingsThemePanel_SELECT_COLORS_AND_FONT_THAT_HAVE, "Vivado Default Theme", 0); // dz (dw, I)
+// Elapsed time: 17 seconds
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+// [GUI Memory]: 133 MB (+9980kb) [00:11:34]
+// Elapsed time: 10 seconds
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Verilog]", 13, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, VHDL]", 14, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Tcl]", 15, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Xdc]", 16, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Trigger State Machine]", 17, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, 3rd Party Simulators]", 18, false); // L (E, I)
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Colors]", 19, true); // L (E, I) - Node
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Strategies]", 22, true); // L (E, I) - Node
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Window Behavior]", 23, true); // L (E, I) - Node
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Code Completion]", 9, false); // L (E, I)
+// Elapsed time: 11 seconds
+selectButton(RDIResource.BaseDialog_OK, "OK"); // a (I)
+dismissDialog("Settings"); // I (cr)
+selectCodeEditor("thinpad_top.v", 103, 274); // ch (w, cr)
+selectCodeEditor("thinpad_top.v", 90, 279); // ch (w, cr)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// [GUI Memory]: 141 MB (+1335kb) [00:12:40]
+// PAResourceOtoP.PAViews_CODE: Code: close view
+// Elapsed time: 18 seconds
+closeView(PAResourceOtoP.PAViews_CODE, "Code"); // B
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, thinpad_top (thinpad_top.v)]", 1, true); // B (F, cr) - Node
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, thinpad_top (thinpad_top.v)]", 1, true, false, false, false, false, true); // B (F, cr) - Double Click - Node
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// Tcl Message: update_compile_order -fileset sources_1 
+// Elapsed time: 271 seconds
+selectButton(PAResourceAtoD.AbstractFileView_RELOAD, "Reload"); // h (ds, cr)
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// Tcl Message: update_compile_order -fileset sources_1 
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// Elapsed time: 89 seconds
+selectButton(PAResourceAtoD.AbstractFileView_RELOAD, "Reload"); // h (ds, cr)
+selectCodeEditor("thinpad_top.v", 398, 45); // ch (w, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_REPORTS, "Reports"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_REPORTS, "Reports"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // aa (q, cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // aa (q, cr)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // aa (q, cr)
+selectMenu(RDIResourceCommand.RDICommands_CUSTOM_COMMANDS, "Custom Commands"); // af (cr)
+selectMenuItem(RDIResourceCommand.RDICommands_SETTINGS, "Settings..."); // ai (cr)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // aa (q, cr)
+// Run Command: RDIResourceCommand.RDICommands_SETTINGS
+// I (cr): Settings: addNotify
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor, Fonts and Colors]", 12, false); // L (E, I)
+// Elapsed time: 22 seconds
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+// [GUI Memory]: 149 MB (+1511kb) [00:19:23]
+// Elapsed time: 41 seconds
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+// Elapsed time: 26 seconds
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+// Elapsed time: 29 seconds
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+// Elapsed time: 12 seconds
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+// Elapsed time: 241 seconds
+selectTree(PAResourceQtoS.SettingsDialog_OPTIONS_TREE, "[optionsRoot, Text Editor]", 8, true); // L (E, I) - Node
+selectComboBox(PAResourceQtoS.SettingsEditorPage_USE_THIS_DROP_DOWN_LIST_BOX_TO_SELECT, "Custom Editor...", 10); // aA (Q, I)
+// aC (I): Custom Editor Definition: addNotify
+// Elapsed time: 20 seconds
+setText(PAResourceQtoS.SettingsEditorPage_ENTER_COMMAND_LINE_FOR_CUSTOM, "\"C:\Users\lee_j\AppData\Local\Programs\Microsoft VS Code\Code.exe\" -"); // ac (aC)
+// Elapsed time: 11 seconds
+setText(PAResourceQtoS.SettingsEditorPage_ENTER_COMMAND_LINE_FOR_CUSTOM, "\"C:\Users\lee_j\AppData\Local\Programs\Microsoft VS Code\Code.exe\" -g $1:$2"); // ac (aC)
+selectButton(RDIResource.BaseDialog_OK, "OK"); // a (aC)
+// HOptionPane Error: ''[file name]' is missing from editor's definition. (Invalid Editor Definition)'
+selectButton("OptionPane.button", "OK"); // JButton (A, H)
+// Elapsed time: 24 seconds
+setText(PAResourceQtoS.SettingsEditorPage_ENTER_COMMAND_LINE_FOR_CUSTOM, "\"C:\Users\lee_j\AppData\Local\Programs\Microsoft VS Code\Code.exe\" -g [file name]:[line number]", true); // ac (aC)
+selectButton(RDIResource.BaseDialog_OK, "OK"); // a (aC)
+dismissDialog("Custom Editor Definition"); // aC (I)
+selectButton(RDIResource.BaseDialog_APPLY, "Apply"); // a (I)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, async_receiver (async.v)]", 1, true); // B (F, cr) - Node
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, thinpad_top (thinpad_top.v)]", 2, true); // B (F, cr) - Node
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, thinpad_top (thinpad_top.v)]", 2, true, false, false, false, false, true); // B (F, cr) - Double Click - Node
+// Launch External Editor: '"C:/Users/lee_j/AppData/Local/Programs/Microsoft VS Code/Code.exe" -g "D:/THU/codes/cod/thinpad_top.srcs/sources_1/new/thinpad_top.v":3'
