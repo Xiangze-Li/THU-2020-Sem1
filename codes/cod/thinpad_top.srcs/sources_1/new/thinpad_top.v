@@ -174,18 +174,18 @@ module thinpad_top
             case (state)
                 S0 : begin
                     oprandA <= dip_sw;
-                    number <= 8'h1;
+                    number <= 8'h2;
                 end
                 S1 : begin
                     oprandB <= dip_sw;
-                    number <= 8'h2;
+                    number <= 8'h3;
                 end
                 S2 : begin
-                    number <= 8'h3;
+                    number <= 8'h4;
                     // result is connected directly to ALU submodule
                 end
                 S3 : begin
-                    number <= 8'h4;
+                    number <= 8'h1;
                     // flagOV same as above
                 end
                 default : begin

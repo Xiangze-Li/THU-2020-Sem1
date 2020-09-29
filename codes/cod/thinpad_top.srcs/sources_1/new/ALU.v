@@ -40,7 +40,7 @@ module ALU
                 result = oprandA - oprandB;
                 flagOV = (oprandA[15] ^ oprandB[15]) & (oprandA[15] ^ result[15]);
             end
-            OP_ADD : begin
+            OP_AND : begin
                 result = oprandA & oprandB;
             end
             OP_OR  : begin
