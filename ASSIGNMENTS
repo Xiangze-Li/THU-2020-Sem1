@@ -1,10 +1,6 @@
 计算机组成原理:
     [ ] HW 1
     
-人工神经网络:
-    [ ] HW 1 手写 MLP 数字识别 
-        due(2020-10-04)
-    
 计算机网络原理:
 
     
@@ -26,8 +22,8 @@ Others:
     [ ] 学习 LaTeX
 
 Archive:
+    [-] HW 1 手写 MLP 数字识别 @cancelled(20-09-29 10:04) @project(人工神经网络)
     [+] HW 1 读论文 @done(20-09-28 15:41) @project(计算机网络原理)
-        due(2020-10-05)
     [+] 配置 Vivado @critical @done(20-09-27 16:33) @project(计算机组成原理)
     [+] 配置环境 @done(20-09-25 12:00) @project(编译原理)
     [+] stage 1 @done(20-09-26 12:00) @project(编译原理)
