@@ -26,7 +26,8 @@ module ALU
     ALU_ROL (oprandA, oprandB[3:0], rolResult);
 
         // NOTE: ALU Logics
-    always @(*) begin    
+    always @(*) begin
+        flagOV = 0;
         case(opCode)
             OP_ADD : begin
                 {flagOV, result} = oprandA + oprandB;
@@ -61,9 +62,8 @@ module ALU
                 result = oprandA >>> oprandB[3:0];
             end
             default: begin
-                // TODO: fill smth
+                result = 16'hFFFF;
             end
-            // TODO: Cauculate Flags SF and VF
         endcase
     end
     // ALU

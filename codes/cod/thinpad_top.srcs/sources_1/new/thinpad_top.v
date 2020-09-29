@@ -121,8 +121,8 @@ module thinpad_top
     reg[15:0]   oprandA;
     reg[15:0]   oprandB;
     reg[3:0]    opCode;
-    reg[15:0]   result;
-    reg         flagOV;
+    wire[15:0]  result;
+    wire        flagOV;
 
 /*
     // //四个标志位
@@ -131,7 +131,8 @@ module thinpad_top
     // reg sf = 1'b0; //Signed Flag 
     // reg vf = 1'b0; //Overflow Flag 
 */
-
+    
+//    wire[15:0] aluResult;
     ALU (opCode, oprandA, oprandB, result, flagOV);
 
     // NOTE: StateMachine: Output
