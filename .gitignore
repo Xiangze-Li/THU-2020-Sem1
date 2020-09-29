@@ -4,7 +4,7 @@ thinpad_top.runs/
 *.jou
 *.log
 *.dcp
-*.str
+vivado_*.str
 /.lint/
 /.Xil
 /.Xilinx
