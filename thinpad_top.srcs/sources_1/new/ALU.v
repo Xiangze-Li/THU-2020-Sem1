@@ -25,6 +25,9 @@ module ALU
     wire[15:0] rolResult;
     ALU_ROL (oprandA, oprandB[3:0], rolResult);
 
+    wire[15:0] sraResult;
+    ALU_SRA (oprandA, oprandB[3:0], sraResult);
+
         // NOTE: ALU Logics
     always @(*) begin
         flagOV = 0;
@@ -61,7 +64,7 @@ module ALU
             end
             OP_SRA : begin
                 // TODO: Shift Right Arithmeticly
-                result = oprandA >>> oprandB[3:0];
+                result = sraResult;
             end
             default: begin
                 result = 16'hFFFF;
@@ -98,6 +101,37 @@ module ALU_ROL
             4'hD : out = {oprandA[02:0], oprandA[15:03]};
             4'hE : out = {oprandA[01:0], oprandA[15:02]};
             4'hF : out = {oprandA[00:0], oprandA[15:01]};
+            default: out = 16'hFFFF;
+        endcase
+    end 
+
+endmodule
+
+module ALU_SRA
+(
+    input wire[15:0] oprandA,
+    input wire[3:0]  oprandB,
+    output reg[15:0] out
+);
+
+    always @(*) begin
+        case (oprandB)
+            4'h0 : out = oprandA;
+            4'h1 : out = {{01{oprandA[15]}}, oprandA[15:01]};
+            4'h2 : out = {{02{oprandA[15]}}, oprandA[15:02]};
+            4'h3 : out = {{03{oprandA[15]}}, oprandA[15:03]};
+            4'h4 : out = {{04{oprandA[15]}}, oprandA[15:04]};
+            4'h5 : out = {{05{oprandA[15]}}, oprandA[15:05]};
+            4'h6 : out = {{06{oprandA[15]}}, oprandA[15:06]};
+            4'h7 : out = {{07{oprandA[15]}}, oprandA[15:07]};
+            4'h8 : out = {{08{oprandA[15]}}, oprandA[15:08]};
+            4'h9 : out = {{09{oprandA[15]}}, oprandA[15:09]};
+            4'hA : out = {{10{oprandA[15]}}, oprandA[15:10]};
+            4'hB : out = {{11{oprandA[15]}}, oprandA[15:11]};
+            4'hC : out = {{12{oprandA[15]}}, oprandA[15:12]};
+            4'hD : out = {{13{oprandA[15]}}, oprandA[15:13]};
+            4'hE : out = {{14{oprandA[15]}}, oprandA[15:14]};
+            4'hF : out = {{15{oprandA[15]}}, oprandA[15:15]};
             default: out = 16'hFFFF;
         endcase
     end 
