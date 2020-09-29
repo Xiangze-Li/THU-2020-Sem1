@@ -12,7 +12,7 @@
 //
 //  Description:  Alliance 4Mb Fast Asynchronous SRAM
 //
-//  Note: The model is Done for 10ns cycle time . To work with other cycle time, 
+//  - Note: The model is Done for 10ns cycle time . To work with other cycle time, 
 //  we have to change the timing parameters according to Data sheet.
 //   
 //**************************************************************************//
