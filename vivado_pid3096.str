@@ -7628,3 +7628,6 @@ selectButton(PAResourceCommand.PACommandNames_AUTO_FIT_SELECTION, (String) null)
 // Run Command: PAResourceCommand.PACommandNames_AUTO_FIT_SELECTION
 selectButton(PAResourceCommand.PACommandNames_AUTO_FIT_SELECTION, (String) null); // x (f, cr): TRUE
 // Run Command: PAResourceCommand.PACommandNames_AUTO_FIT_SELECTION
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: DESIGN_STALE
+// TclEventType: FILE_SET_CHANGE
