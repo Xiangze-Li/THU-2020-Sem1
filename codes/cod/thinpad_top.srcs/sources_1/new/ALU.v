@@ -30,10 +30,12 @@ module ALU
         flagOV = 0;
         case(opCode)
             OP_ADD : begin
-                {flagOV, result} = oprandA + oprandB;
+                result = oprandA + oprandB;
+                flagOV = (oprandA[15] ~^ oprandB[15]) & (oprandA[15] ^ result[15]);
             end
             OP_SUB : begin
-                {flagOV, result} = oprandA - oprandB;
+                result = oprandA - oprandB;
+                flagOV = (oprandA[15] ^ oprandB[15]) & (oprandA[15] ^ result[15]);
             end
             OP_ADD : begin
                 result = oprandA & oprandB;
