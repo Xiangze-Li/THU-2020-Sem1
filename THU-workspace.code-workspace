@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"name": "THU-TOP",
+			"path": "."
+		},
+		{
+			"name": "Computer Org & Design",
+			"path": "codes/cod"
+		},
+		{
+			"name": "Compiler",
+			"path": "codes/minidecaf"
+		},
+		{
+			"name": "Network Router",
+			"path": "codes/router"
+		},
+		{
+			"name": "Writings",
+			"path": "writings"
+		}
+	],
+	"settings": {}
+}
