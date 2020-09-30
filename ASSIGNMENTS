@@ -1,11 +1,11 @@
 计算机组成原理:
     [ ] HW 1
-    [ ] EXP 2 : ALU
-    
+
+
 计算机网络原理:
 
-    
-编译原理: 
+
+编译原理:
     [ ] EXP 编译器
         [ ] stage 2
         [ ] stage 3
@@ -18,11 +18,12 @@
 
 软件工程:
     [ ] HW 2 : FrontEnd
-    
+
 Others:
     [ ] 学习 LaTeX
 
 Archive:
+    [+] EXP 2 : ALU @done(20-09-30 13:16) @project(计算机组成原理)
     [-] HW 1 手写 MLP 数字识别 @cancelled(20-09-29 10:04) @project(人工神经网络)
     [+] HW 1 读论文 @done(20-09-28 15:41) @project(计算机网络原理)
     [+] 配置 Vivado @critical @done(20-09-27 16:33) @project(计算机组成原理)
