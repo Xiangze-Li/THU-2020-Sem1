@@ -17,7 +17,12 @@ statement
 	;
 
 expr
-	: INTEGER
+	: unary
+	;
+
+unary
+	: INTEGER				# integerLiteral
+	| ('-'|'~'|'!') unary	# unaryOp
 	;
 
 /* lexer */
