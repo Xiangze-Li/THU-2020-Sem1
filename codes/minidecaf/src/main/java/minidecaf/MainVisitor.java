@@ -42,7 +42,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type> {
 
     @Override
     public Type visitReturnStatement(ReturnStatementContext ctx) {
-        visit(ctx.expr());
+        visit(ctx.expression());
 
         sb.append("\tret\n");
 
@@ -50,21 +50,140 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type> {
     }
 
     @Override
-    public Type visitExpr(ExprContext ctx) {
-        return visit(ctx.unary());
+    public Type visitExpression(ExpressionContext ctx) {
+        return visit(ctx.expr_or());
     }
 
     @Override
-    public Type visitIntegerLiteral(IntegerLiteralContext ctx) {
-        TerminalNode num = ctx.INTEGER();
+    public Type visitExpr_or(Expr_orContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return visit(ctx.getChild(0));
+        } else {
+            assert (ctx.getChildCount() == 3);
+            visit(ctx.getChild(0));
+            visit(ctx.getChild(2));
+            sb.append("\torl\n");
+            return new IntType();
+        }
+    }
 
-        // 数字字面量不能超过整型的最大值
-        if (compare(Integer.toString(Integer.MAX_VALUE), num.getText()) == -1)
-            reportError("too large number", ctx);
+    @Override
+    public Type visitExpr_and(Expr_andContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return visit(ctx.getChild(0));
+        } else {
+            assert (ctx.getChildCount() == 3);
+            visit(ctx.getChild(0));
+            visit(ctx.getChild(2));
+            sb.append("\tandl\n");
+            return new IntType();
+        }
+    }
 
-        sb.append("\tpush " + num.getText() + "\n");
+    @Override
+    public Type visitExpr_equal(Expr_equalContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return visit(ctx.getChild(0));
+        } else {
+            assert (ctx.getChildCount() == 3);
+            visit(ctx.getChild(0));
+            visit(ctx.getChild(2));
+            switch (ctx.getChild(1).getText()) {
+                case "==":
+                    sb.append("\teq\n");
+                    break;
+                case "!=":
+                    sb.append("\tneq\n");
+                    break;
+                default:
+                    assert (false);
+                    break;
+            }
+            return new IntType();
+        }
+    }
 
-        return new IntType();
+    @Override
+    public Type visitExpr_relation(Expr_relationContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return visit(ctx.getChild(0));
+        } else {
+            assert (ctx.getChildCount() == 3);
+            visit(ctx.getChild(0));
+            visit(ctx.getChild(2));
+            switch (ctx.getChild(1).getText()) {
+                case "<":
+                    sb.append("\tlt\n");
+                    break;
+                case ">":
+                    sb.append("\tgt\n");
+                    break;
+                case "<=":
+                    sb.append("\tle\n");
+                    break;
+                case ">=":
+                    sb.append("\tge\n");
+                    break;
+                default:
+                    assert (false);
+                    break;
+            }
+            return new IntType();
+        }
+    }
+
+    @Override
+    public Type visitExpr_add(Expr_addContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return visit(ctx.getChild(0));
+        } else {
+            assert (ctx.getChildCount() == 3);
+            visit(ctx.getChild(0));
+            visit(ctx.getChild(2));
+            switch (ctx.getChild(1).getText()) {
+                case "+":
+                    sb.append("\tadd\n");
+                    break;
+                case "-":
+                    sb.append("\tsub\n");
+                    break;
+                default:
+                    assert (false);
+                    break;
+            }
+            return new IntType();
+        }
+    }
+
+    @Override
+    public Type visitExpr_multiply(Expr_multiplyContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return visit(ctx.getChild(0));
+        } else {
+            assert (ctx.getChildCount() == 3);
+            visit(ctx.getChild(0));
+            visit(ctx.getChild(2));
+            switch (ctx.getChild(1).getText()) {
+                case "*":
+                    sb.append("\tmul\n");
+                    break;
+                case "/":
+                    sb.append("\tdiv\n");
+                    break;
+                case "%":
+                    sb.append("\trem\n");
+                    break;
+                default:
+                    assert (false);
+                    break;
+            }
+            return new IntType();
+        }
+    }
+
+    @Override
+    public Type visitUnaryPrimary(UnaryPrimaryContext ctx) {
+        return visit(ctx.primary());
     }
 
     @Override
@@ -87,6 +206,24 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type> {
         }
 
         return new IntType();
+    }
+
+    @Override
+    public Type visitPrimIntLit(PrimIntLitContext ctx) {
+        TerminalNode num = ctx.INTEGER();
+
+        // 数字字面量不能超过整型的最大值
+        if (compare(Integer.toString(Integer.MAX_VALUE), num.getText()) == -1)
+            reportError("too large number", ctx);
+
+        sb.append("\tpush " + num.getText() + "\n");
+
+        return new IntType();
+    }
+
+    @Override
+    public Type visitPrimParen(PrimParenContext ctx) {
+        return visit(ctx.expression());
     }
 
     /* 一些工具方法 */
