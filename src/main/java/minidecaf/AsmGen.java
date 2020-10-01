@@ -35,6 +35,21 @@ public class AsmGen {
                     case "neg":
                         doUnaryOp(sb, "neg");
                         break;
+                    // TODO: Fill those cases below!
+                    case "orl":
+                    case "andl":
+                    case "eq":
+                    case "neq":
+                    case "lt":
+                    case "gt":
+                    case "le":
+                    case "ge":
+                    case "add":
+                    case "sub":
+                    case "mul":
+                    case "div":
+                    case "rem":
+
                     default:
                         assert (false);
                         break;
@@ -43,6 +58,16 @@ public class AsmGen {
         }
 
         return sb.toString();
+    }
+
+    private static void mPop(final StringBuilder sb, final String toWhere) {
+        sb.append("\tlw ").append(toWhere).append(",0(sp)\n");
+        sb.append("\taddi sp,sp,4\n");
+    }
+
+    private static void mPush(final StringBuilder sb, final String fromWhere) {
+        sb.append("\taddi sp,sp,-4\n");
+        sb.append("\tsw ").append(fromWhere).append(",0(sp)\n");
     }
 
     private static void doFunc(final StringBuilder sb, final String label) {
@@ -68,14 +93,6 @@ public class AsmGen {
         mPop(sb, "t1");
         sb.append("\t").append(whatOp).append(" t1,t1\n");
         mPush(sb, "t1");
-    }
-
-    private static void mPop(final StringBuilder sb, final String toWhere) {
-        sb.append("\tlw ").append(toWhere).append(",0(sp)\n").append("\taddi sp,sp,4\n");
-    }
-
-    private static void mPush(final StringBuilder sb, final String fromWhere) {
-        sb.append("\taddi sp,sp,-4\n").append("sw ").append(fromWhere).append(",0(sp)\n");
     }
 
 }

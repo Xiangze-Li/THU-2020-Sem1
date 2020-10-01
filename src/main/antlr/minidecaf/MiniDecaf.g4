@@ -13,16 +13,51 @@ type
 	;
 
 statement
-	: 'return' expr ';'	# returnStatement
+	: 'return' expression ';'	# returnStatement
 	;
 
-expr
+expression
+	: expr_or
+	;
+
+expr_or
+	: expr_and
+	| expr_or '||' expr_and
+	;
+
+expr_and
+	: expr_equal
+	| expr_and '&&' expr_equal
+	;
+
+expr_equal
+	: expr_relation
+	| expr_equal ('=='|'!=') expr_relation
+	;
+
+expr_relation
+	: expr_add
+	| expr_relation ('<'|'>'|'<='|'>=') expr_add
+	;
+
+expr_add
+	: expr_multiply
+	| expr_add ('+'|'-') expr_multiply
+	;
+
+expr_multiply
 	: unary
+	| expr_multiply ('*'|'/'|'%') unary
 	;
 
 unary
-	: INTEGER				# integerLiteral
+	: primary				# unaryPrimary
 	| ('-'|'~'|'!') unary	# unaryOp
+	;
+
+primary
+	: INTEGER				# primIntLit
+	| '(' expression ')'	# primParen
 	;
 
 /* lexer */
