@@ -35,7 +35,6 @@ public class AsmGen {
                     case "neg":
                         doUnaryOp(sb, "neg");
                         break;
-                    // TODO: Fill those cases below!
                     case "orl":
                     case "andl":
                     case "eq":
@@ -49,6 +48,8 @@ public class AsmGen {
                     case "mul":
                     case "div":
                     case "rem":
+                        doBinaryOp(sb, sp[0]);
+                        break;
 
                     default:
                         assert (false);
@@ -93,6 +94,50 @@ public class AsmGen {
         mPop(sb, "t1");
         sb.append("\t").append(whatOp).append(" t1,t1\n");
         mPush(sb, "t1");
+    }
+
+    private static void doBinaryOp(final StringBuilder sb, final String whatOp) {
+        sb.append("\tlw t1,4(sp)\n").append("\tlw t2,0(sp)\n");
+
+        switch (whatOp) {
+            case "orl":
+                sb.append("\tor t1,t1,t2\n").append("\tsnez t1,t1\n");
+                break;
+            case "andl":
+                sb.append("\tsnez t1,t1\n").append("\tsnez t2,t2\n");
+                sb.append("\tand t1,t1,t2\n");
+                break;
+            case "eq":
+                sb.append("\tsub t1,t1,t2\n").append("\tseqz t1,t1\n");
+                break;
+            case "neq":
+                sb.append("\tsub t1,t1,t2\n").append("\tsnez t1,t1\n");
+                break;
+            case "lt":
+                sb.append("\tslt t1,t1,t2\n");
+                break;
+            case "gt":
+                sb.append("\tslt t1,t2,t1\n");
+                break;
+            case "le":
+                sb.append("\tslt t1,t2,t1\n").append("\txori t1,t1,1\n");
+                break;
+            case "ge":
+                sb.append("\tslt t1,t1,t2\n").append("\txori t1,t1,1\n");
+                break;
+            case "add":
+            case "sub":
+            case "mul":
+            case "div":
+            case "rem":
+                sb.append("\t").append(whatOp).append(" t1,t1,t2\n");
+                break;
+            default:
+                assert (false);
+                break;
+        }
+
+        sb.append("\taddi sp,sp,4\n").append("\tsw t1,0(sp)\n");
     }
 
 }
