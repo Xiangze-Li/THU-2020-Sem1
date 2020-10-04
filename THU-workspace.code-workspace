@@ -17,12 +17,12 @@
 			"path": "codes/router"
 		},
 		{
-			"name": "Writings",
-			"path": "writings"
-		},
-		{
 			"name": "Software Engineering",
 			"path": "codes/se"
+		},
+		{
+			"name": "Writings",
+			"path": "writings"
 		}
 	],
 	"settings": {}
