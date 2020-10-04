@@ -19,6 +19,10 @@
 		{
 			"name": "Writings",
 			"path": "writings"
+		},
+		{
+			"name": "Software Engineering",
+			"path": "codes/se"
 		}
 	],
 	"settings": {}
