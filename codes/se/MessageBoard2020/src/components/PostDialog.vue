@@ -8,32 +8,23 @@
   >
     <el-form label-width="80px">
       <el-form-item label="标题">
-        <!--请修改这两行注释中间的代码来输入消息标题-->
         <el-input v-model="title" placeholder="title"></el-input>
-        <!--请修改这两行注释中间的代码来输入消息标题-->
       </el-form-item>
       <el-form-item label="内容">
-        <!--请修改这两行注释中间的代码来输入消息内容-->
         <el-input
           v-model="content"
           type="textarea"
           placeholder="message"
         ></el-input>
-        <!--请修改这两行注释中间的代码来输入消息内容-->
       </el-form-item>
       <el-form-item label="用户名">
-        <!--请修改这两行注释中间的代码来输入用户名-->
-        <el-input
-          v-model="state.username"
-        ></el-input>
-        <!--请修改这两行注释中间的代码来输入用户名-->
+        <el-input v-model="state.username"></el-input>
         <span v-if="state.username_valid === false" style="color: red"
           >请设置合法用户名!</span
         >
       </el-form-item>
     </el-form>
     <span slot="footer" class="dialog-footer">
-      <!--请修改这两行注释中间的代码来产生相应按钮的点击事件-->
       <el-button @click="onCancel">取 消</el-button>
       <el-button
         type="primary"
@@ -41,7 +32,6 @@
         @click="onConfirm"
         >确 定</el-button
       >
-      <!--请修改这两行注释中间的代码来产生相应按钮的点击事件-->
     </span>
   </el-dialog>
 </template>
@@ -73,8 +63,16 @@ export default {
   },
   methods: {
     onConfirm: function () {
+      // console.log("1\n");
+      this.$emit(
+        "postit",
+        this.title,
+        this.content,
+        this.state.username,
+        new Date().gettime()
+      );
+      // console.log("2\n");
       this.dialogVisible = false;
-      this.$emit("postit", this.title, this.content, this.state.username, new Date().gettime());
     },
     onCancel: function () {
       this.dialogVisible = false;

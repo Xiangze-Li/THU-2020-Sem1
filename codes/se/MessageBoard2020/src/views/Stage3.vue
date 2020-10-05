@@ -1,8 +1,8 @@
 <template>
   <div id="stage3">
     <!--修改下方的MessageList和PostDialog-->
-    <MessageList v-bind:messageList="messageList" />
-    <PostDialog v-on:postit="postit" />
+    <MessageList v-bind:messageList="messagelist" />
+    <PostDialog v-on:postit="post_it" />
   </div>
 </template>
 
@@ -19,18 +19,19 @@ export default {
   // 请在下方设计自己的数据结构和响应函数
   data() {
     return {
-      messageList: [],
+      messagelist: [],
       dialogVisible: true,
     };
   },
   methods: {
-    postit: function (title, content, username, timestamp) {
-      this.messageList.push({
-        title: title,
-        content: content,
-        user: username,
-        timestamp: timestamp,
+    post_it: function (mtitle, mcontent, musername, mtimestamp) {
+      this.messagelist.push({
+        title: mtitle,
+        content: mcontent,
+        user: musername,
+        timestamp: mtimestamp,
       });
+      console.log(this.messagelist);
     },
   },
 };
