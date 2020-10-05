@@ -9,17 +9,23 @@
     <el-form label-width="80px">
       <el-form-item label="标题">
         <!--请修改这两行注释中间的代码来输入消息标题-->
-        <el-input placeholder="title"></el-input>
+        <el-input v-model="title" placeholder="title"></el-input>
         <!--请修改这两行注释中间的代码来输入消息标题-->
       </el-form-item>
       <el-form-item label="内容">
         <!--请修改这两行注释中间的代码来输入消息内容-->
-        <el-input type="textarea" placeholder="message"></el-input>
+        <el-input
+          v-model="content"
+          type="textarea"
+          placeholder="message"
+        ></el-input>
         <!--请修改这两行注释中间的代码来输入消息内容-->
       </el-form-item>
       <el-form-item label="用户名">
         <!--请修改这两行注释中间的代码来输入用户名-->
-        <el-input />
+        <el-input
+          v-model="state.username"
+        ></el-input>
         <!--请修改这两行注释中间的代码来输入用户名-->
         <span v-if="state.username_valid === false" style="color: red"
           >请设置合法用户名!</span
@@ -28,8 +34,11 @@
     </el-form>
     <span slot="footer" class="dialog-footer">
       <!--请修改这两行注释中间的代码来产生相应按钮的点击事件-->
-      <el-button>取 消</el-button>
-      <el-button type="primary" :disabled="state.username_valid === false"
+      <el-button @click="onCancel">取 消</el-button>
+      <el-button
+        type="primary"
+        :disabled="state.username_valid === false"
+        @click="onConfirm"
         >确 定</el-button
       >
       <!--请修改这两行注释中间的代码来产生相应按钮的点击事件-->
@@ -57,9 +66,20 @@ export default {
   },
   // 请在下方设计自己的数据结构以及事件函数
   data() {
-    return {};
+    return {
+      title: "",
+      content: "",
+    };
   },
-  methods: {},
+  methods: {
+    onConfirm: function () {
+      this.dialogVisible = false;
+      this.$emit("postit", this.title, this.content, this.state.username, new Date().gettime());
+    },
+    onCancel: function () {
+      this.dialogVisible = false;
+    },
+  },
   watch: {
     // 用于实时检测username是否合法
     "state.username": {
