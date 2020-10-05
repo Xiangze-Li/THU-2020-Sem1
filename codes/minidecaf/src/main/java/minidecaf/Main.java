@@ -17,20 +17,21 @@ public class Main
         }
 
         CharStream input = CharStreams.fromFileName(args[0]);
-
         MiniDecafLexer lexer = new MiniDecafLexer(input);
-        
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        
         MiniDecafParser parser = new MiniDecafParser(tokens);
         parser.setErrorHandler(new BailErrorStrategy());
         ParseTree tree = parser.program();
-        
-        StringBuilder irBuilder = new StringBuilder();
-        MainVisitor visitor = new MainVisitor(irBuilder);
+        MainVisitor visitor = new MainVisitor();
+
         visitor.visit(tree);
-        String asm = AsmGen.genAsm(irBuilder.toString());
-        
+
+        IR ir = visitor.getIR();
+
+        System.out.println(ir.irCode);
+
+        String asm = AsmGen.genAsm(ir);
+
         try (FileWriter writer = new FileWriter(args[1]))
         {
             writer.write(asm);
