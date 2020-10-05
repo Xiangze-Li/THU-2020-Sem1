@@ -1,64 +1,75 @@
 grammar MiniDecaf;
 
 program
-	: function EOF
-	;
+    : function EOF
+    ;
 
 function
-	: type IDENT '(' ')' '{' statement '}'
-	;
+    : type IDENT '(' ')' '{' statement* '}'
+    ;
 
 type
-	: 'int'
-	;
+    : 'int'
+    ;
 
 statement
-	: 'return' expression ';'	# returnStatement
-	;
+    : 'return' expression ';'	# stmtRet
+    | expression? ';' 			# stmtExpr
+    | declearation 				# stmtDecl
+    ;
 
+declearation
+    : type IDENT ('=' expression)? ';'
+    ;
 expression
-	: expr_or
-	;
+    : expr_assign
+    ;
+
+expr_assign
+    : expr_or
+    | IDENT '=' expression
+    ;
 
 expr_or
-	: expr_and
-	| expr_or '||' expr_and
-	;
+    : expr_and
+    | expr_or '||' expr_and
+    ;
 
 expr_and
-	: expr_equal
-	| expr_and '&&' expr_equal
-	;
+    : expr_equal
+    | expr_and '&&' expr_equal
+    ;
 
 expr_equal
-	: expr_relation
-	| expr_equal ('=='|'!=') expr_relation
-	;
+    : expr_relation
+    | expr_equal ('=='|'!=') expr_relation
+    ;
 
 expr_relation
-	: expr_add
-	| expr_relation ('<'|'>'|'<='|'>=') expr_add
-	;
+    : expr_add
+    | expr_relation ('<'|'>'|'<='|'>=') expr_add
+    ;
 
 expr_add
-	: expr_multiply
-	| expr_add ('+'|'-') expr_multiply
-	;
+    : expr_multiply
+    | expr_add ('+'|'-') expr_multiply
+    ;
 
 expr_multiply
-	: unary
-	| expr_multiply ('*'|'/'|'%') unary
-	;
+    : unary
+    | expr_multiply ('*'|'/'|'%') unary
+    ;
 
 unary
-	: primary				# unaryPrimary
-	| ('-'|'~'|'!') unary	# unaryOp
-	;
+    : primary				# unaryPrimary
+    | ('-'|'~'|'!') unary	# unaryOp
+    ;
 
 primary
-	: INTEGER				# primIntLit
-	| '(' expression ')'	# primParen
-	;
+    : INTEGER				# primIntLit
+    | '(' expression ')'	# primParen
+    | IDENT					# primIdent
+    ;
 
 /* lexer */
 WS: [ \t\r\n\u000C]+ -> skip;
