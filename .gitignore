@@ -4,5 +4,9 @@
 # Ignore Gradle build output directory
 build
 
+bin
+
 /src/main/antlr/minidecaf/.antlr
 .settings/
+.classpath
+.project
