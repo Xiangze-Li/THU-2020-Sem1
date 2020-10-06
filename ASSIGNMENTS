@@ -1,28 +1,37 @@
 计算机组成原理:
-    [ ] HW 1
-
+    [ ] EXP 3 & 4
+        due(20-10-20)
 
 计算机网络原理:
-
+    [ ] HW 2
+        due(20-10-19)
 
 编译原理:
     [ ] EXP 编译器
-        [ ] stage 2
+        [+] stage 2 @done(20-10-06 18:44)
         [ ] stage 3
+            due(20-11-01)
         [ ] stage 4
+            due(20-11-15)
         [ ] stage 5
+            due(20-12-06)
         [ ] stage 6
+            due(20-12-27)
+    [ ] HW 1
+        due(20-10-18)
 
 信号处理原理:
 
 
 软件工程:
     [ ] HW 2 : FrontEnd
+        due(2020-10-14)
 
 Others:
     [ ] 学习 LaTeX
 
 Archive:
+    [+] HW 1 @done(20-10-06 18:44) @project(计算机组成原理)
     [+] EXP 2 : ALU @done(20-09-30 13:16) @project(计算机组成原理)
     [-] HW 1 手写 MLP 数字识别 @cancelled(20-09-29 10:04) @project(人工神经网络)
     [+] HW 1 读论文 @done(20-09-28 15:41) @project(计算机网络原理)
