@@ -17,7 +17,7 @@
       </el-header>
 
       <el-main>
-        <MessageList v-bind:messagelist="messageList" />
+        <MessageList v-bind:messageList="messageList" />
       </el-main>
 
       <el-footer>@CST2020SE</el-footer>
@@ -73,7 +73,7 @@ export default {
     refresh: function () {
       this.messageList = getMessage()
         .then((res) => {
-          this.messageList = res.data.data.reverse();
+          this.messageList = res.data.data;
           this.messageList.for;
         })
         .catch((e) => {
