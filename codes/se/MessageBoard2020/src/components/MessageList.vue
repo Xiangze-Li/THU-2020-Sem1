@@ -4,10 +4,7 @@
     <MessageBlock
       v-for="block in messageList"
       v-bind:key="block.timestamp"
-      v-bind:title="block.title"
-      v-bind:content="block.content"
-      v-bind:user="block.user"
-      v-bind:timestamp="block.timestamp"
+      v-bind="block"
     />
     <!--请修改这两行注释中间的代码，达到用多个MessageBlock来展示messageList数据的效果-->
   </div>

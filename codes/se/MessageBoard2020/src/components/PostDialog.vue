@@ -63,19 +63,16 @@ export default {
   },
   methods: {
     onConfirm: function () {
-      // console.log("1\n");
-      this.$emit(
-        "postit",
-        this.title,
-        this.content,
-        this.state.username,
-        new Date().gettime()
-      );
-      // console.log("2\n");
-      this.dialogVisible = false;
+      let message = {
+        title: this.title,
+        content: this.content,
+        user: this.state.username,
+        timestamp: new Date().getTime(),
+      };
+      this.$emit("postit", message);
     },
     onCancel: function () {
-      this.dialogVisible = false;
+      this.$emit("hide");
     },
   },
   watch: {

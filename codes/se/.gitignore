@@ -1,3 +1,6 @@
 *.pdf
 *.zip
 # /messageboard/*
+__pycache__/
+migrations/
+db.sqlite3

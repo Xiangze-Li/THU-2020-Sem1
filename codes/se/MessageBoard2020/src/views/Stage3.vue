@@ -2,7 +2,11 @@
   <div id="stage3">
     <!--修改下方的MessageList和PostDialog-->
     <MessageList v-bind:messageList="messagelist" />
-    <PostDialog v-on:postit="post_it" />
+    <PostDialog
+      v-on:postit="post_it"
+      v-on:hide="dialogVisible = false"
+      v-bind:dialogVisible="dialogVisible"
+    />
   </div>
 </template>
 
@@ -24,14 +28,9 @@ export default {
     };
   },
   methods: {
-    post_it: function (mtitle, mcontent, musername, mtimestamp) {
-      this.messagelist.push({
-        title: mtitle,
-        content: mcontent,
-        user: musername,
-        timestamp: mtimestamp,
-      });
-      console.log(this.messagelist);
+    post_it: function (msg) {
+      this.messagelist.push(msg);
+      this.dialogVisible = false;
     },
   },
 };
