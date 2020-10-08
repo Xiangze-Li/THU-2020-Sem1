@@ -26,6 +26,7 @@
       v-on:postit="post_it"
       v-on:hide="postDialog.dialogVisible = false"
       v-bind:dialogVisible="postDialog.dialogVisible"
+      v-bind:state="state"
     />
     <el-dialog
       style="text-align: center"
@@ -63,7 +64,7 @@ export default {
         dialogVisible: false,
       },
       state: {
-        username: "",
+        username: this.getcookie("user"),
         username_valid: false,
       },
       messageList: [],
@@ -74,7 +75,9 @@ export default {
       this.messageList = getMessage()
         .then((res) => {
           this.messageList = res.data.data;
-          this.messageList.for;
+          this.messageList.forEach((element) => {
+            element.timestamp *= 1000;
+          });
         })
         .catch((e) => {
           this.alertDialog.text = "刷新失败";
@@ -84,8 +87,11 @@ export default {
     },
     post_it: function (message) {
       this.postDialog.dialogVisible = false;
+      document.cookie = "user=" + message.user;
       postMessage(message)
         .then(() => {
+          this.postDialog.form.title="";
+          this.postDialog.form.content="";
           this.alertDialog.text = "发帖成功";
           this.alertDialog.dialogVisible = true;
           this.refresh();
@@ -95,6 +101,18 @@ export default {
           this.alertDialog.dialogVisible = true;
           console.log(e);
         });
+    },
+    getcookie: function (key) {
+      key += "=";
+      let cookieEntries = document.cookie.split(";");
+      for (let i = 0; i < cookieEntries.length; i++) {
+        let entry = cookieEntries[i];
+        entry = entry.trim();
+        if (entry.indexOf(key) == 0) {
+          return entry.substring(key.length);
+        }
+      }
+      return "";
     },
   },
 };

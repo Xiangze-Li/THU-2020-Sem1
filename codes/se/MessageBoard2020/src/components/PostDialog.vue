@@ -69,6 +69,8 @@ export default {
         user: this.state.username,
         timestamp: new Date().getTime(),
       };
+      this.title = "";
+      this.content = "";
       this.$emit("postit", message);
     },
     onCancel: function () {
