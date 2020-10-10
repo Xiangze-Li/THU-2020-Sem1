@@ -1,80 +1,74 @@
-from TestcaseBase import TestcaseBase
+# STAGE 3 & 4
+#     sram and serial
+
+from TestcaseBase import *
 import random
 import traceback
-import enum
 import time
 
-NAME = 'lab5.1'
-
 class Testcase(TestcaseBase):
-    '''
-    测试流程
-    1. 拨码开关输入A，单击时钟按钮
-    2. 拨码开关输入B，单击时钟按钮（NOT运算输入但不使用B）
-    3. 拨码开关输入OP，LED显示计算结果
-    4. 点击时钟按钮，LED显示标志位
-    '''
+    nRound = 5
+    finishedRound = 0
+    roundPassed = 0
 
-    class ALU_OP(enum.Enum):
-        #   Operand, Random bits, Expression, Overflow
-        ADD = (1,   16, lambda a,b: (a+b) & 0xFFFF, lambda a,b: not(-0x8000<=a+b<0x8000))
-        SUB = (2,   16, lambda a,b: a-b+(0x10000 if a-b<0 else 0), lambda a,b: not(-0x8000<=a-b<0x8000))
-        AND = (3,   16, lambda a,b: a&b, lambda a,b: False)
-        OR  = (4,   16, lambda a,b: a|b, lambda a,b: False)
-        XOR = (5,   16, lambda a,b: a^b, lambda a,b: False)
-        NOT = (6, None, lambda a,b: 0xFFFF & ~a, lambda a,b: False)
-        SLL = (7,    4, lambda a,b: 0xFFFF & (a<<b), lambda a,b: False)
-        SRL = (8,    4, lambda a,b: a>>b, lambda a,b: False)
-        SRA = (9,    4, lambda a,b: (a>>b)|((0x10000-(0x10000>>b)) if a&0x8000 else 0), lambda a,b: False)
-        ROL = (10,   4, lambda a,b: 0xFFFF & (a<<b) | (a>>(16-b)), lambda a,b: False)
+    def launchTest(self):
 
-    opPassed = 0
-    failureLog = []
+        self.start_addr = random.getrandbits(7)
+        self.send_data = bytes([random.getrandbits(8) for i in range(10)])
+        self.log(f"## Test round {self.finishedRound} with Addr={self.start_addr:#02x}")
 
-    @staticmethod
-    def twosComp(x):
-        return -(0x10000-x) if x&0x8000 else x
+        # Set initial memory address
+        DIP << self.start_addr
+        ~Reset
+        self.recvBuf = b''
+        Serial.open(0, baud=9600)
 
-    def runOpTest(self, op):
-        print(f"Testing {op.name}")
-        for times in range(100):
-            self.clickResetButton(1)
-            a = random.getrandbits(16)
-            b = 0 if op.value[1] is None else random.getrandbits(op.value[1])
+        # Send 10 bytes
+        for data in self.send_data:
+            time.sleep(1/1000.0)
+            Serial << data
 
-            self.setAllDIPSwitches(a) # input A
-            time.sleep(0.0001)
-            self.clickClockButton(1)
-            self.setAllDIPSwitches(b) # input B
-            time.sleep(0.0001)
-            self.clickClockButton(1)
-            self.setAllDIPSwitches(op.value[0]) # input OP
-            time.sleep(0.0001)
-            val = self.getLEDBitmask() # output A OP B
-            self.clickClockButton(1)
-            ov_led = (1 & self.getLEDBitmask()) == 1 # output OV flag
+        # Wait for receiving data, timeout in 50ms
+        Timer.oneshot(50)
 
-            ans = op.value[2](a,b)
-            if ans != val:
-                if op.value[1] is None:
-                    self.failureLog.append(f"ERR: ({op.name} {a:04x}) gives {val:04x} (answer {ans:04x})")
-                else:
-                    self.failureLog.append(f"ERR: ({a:04x} {op.name} {b:04x}) gives {val:04x} (answer {ans:04x})")
-                break
-            ov = op.value[3](self.twosComp(a), self.twosComp(b))
-            if ov != ov_led:
-                hint = "should overflow" if ov else "shouldn't overflow"
-                self.failureLog.append(f"ERR: {a:04x} {op.name} {b:04x} {hint}")
-                break
+    # On receiving from serial port
+    @Serial
+    def on_serial(self, dataBytes):
+        self.recvBuf += dataBytes
+        if len(self.recvBuf) >= 10:
+            -Timer
+            self.nextRound(False)
+
+    @Timer
+    def on_timer(self):
+        self.nextRound(True)
+
+    def nextRound(self, timeout:bool):
+        Serial.close()
+
+        # Read the data in BaseRAM
+        memData = list(BaseRAM[self.start_addr*4 : (self.start_addr+len(self.send_data))*4])
+        memData = memData[::4]
+
+        self.log(f"Data Sent:   {list(self.send_data)}")
+        self.log(f"Data in RAM: {memData}")
+        self.log(f"Received:    {list(self.recvBuf)} {'(Timeout)' if timeout else ''}")
+
+        # Compare the data
+        failed = timeout or self.send_data!=self.recvBuf or self.send_data!=bytes(memData)
+        if failed:
+            self.log("FAILED")
         else:
-            self.opPassed += 1
+            self.roundPassed += 1
+            self.log("PASSED")
 
-    def onStart(self):
-        random.seed(260817) # reproducible random number for the test
-        for op in list(self.ALU_OP):
-            self.runOpTest(op)
-        if len(self.failureLog) != 0:
-            reason = "\n".join(self.failureLog)
+        self.finishedRound += 1
+        if self.finishedRound == self.nRound:
+            self.finish(self.roundPassed/self.nRound)
         else:
-            reason = "All tests passed"
-        self.finish(self.opPassed/len(self.ALU_OP), {'reason': reason})
+            self.launchTest()
+
+    @started
+    def initialize(self):
+        random.seed(260817) # deterministic random number
+        self.launchTest()
