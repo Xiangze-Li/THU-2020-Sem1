@@ -1,12 +1,12 @@
 `default_nettype none
 
-module ALU 
+module ALU
 (
     input wire[3:0] opCode,
     input wire[15:0] oprandA,
     input wire[15:0] oprandB,
     output reg[15:0] result,
-    output reg flagOV 
+    output reg flagOV
 );
 
     // NOTE: OpCodes
@@ -51,19 +51,17 @@ module ALU
             end
             OP_NOT : begin
                 result = ~oprandA;
-            end      
+            end
             OP_SLL : begin
                 result = oprandA << oprandB[3:0];
             end
             OP_ROL : begin
-                // TODO: Rotation
                 result = rolResult;
             end
             OP_SRL : begin
-                result = oprandA >> oprandB[3:0]; 
+                result = oprandA >> oprandB[3:0];
             end
             OP_SRA : begin
-                // TODO: Shift Right Arithmeticly
                 result = sraResult;
             end
             default: begin
@@ -103,7 +101,7 @@ module ALU_ROL
             4'hF : out = {oprandA[00:0], oprandA[15:01]};
             default: out = 16'hFFFF;
         endcase
-    end 
+    end
 
 endmodule
 
@@ -134,6 +132,6 @@ module ALU_SRA
             4'hF : out = {{15{oprandA[15]}}, oprandA[15:15]};
             default: out = 16'hFFFF;
         endcase
-    end 
+    end
 
 endmodule
