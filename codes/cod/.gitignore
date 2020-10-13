@@ -1,6 +1,7 @@
 thinpad_top.cache/
 thinpad_top.hw/
 thinpad_top.runs/
+thinpad_top.sim/
 *.jou
 *.log
 *.dcp
@@ -8,4 +9,3 @@ vivado_*.str
 /.lint/
 /.Xil
 /.Xilinx
-

@@ -81,10 +81,28 @@ module thinpad_top
     output wire video_de           //行数据有效信号，用于区分消隐区
 );
 
-    reg[7:0] number;
+    wire[7:0] number;
     SEG7_LUT segL(.oSEG1(dpy0), .iDIG(number[3:0])); //dpy0是低位数码管
     SEG7_LUT segH(.oSEG1(dpy1), .iDIG(number[7:4])); //dpy1是高位数码管
 
+    assign base_ram_ce_n = 1'b0;
+    assign base_ram_be_n = 4'b0000;
 
+    MemController m(
+        .clk(clk_50M),
+//        .clk(clock_btn),
+        .rst(reset_btn),
+        .seg7disp(number),
+        .base_addr_in(dip_sw[19:0]),
+        .ram_data(base_ram_data),
+        .ram_addr(base_ram_addr),
+        .ram_oe_n(base_ram_oe_n),
+        .ram_we_n(base_ram_we_n),
+        .uart_dataready(uart_dataready),
+        .uart_tbre(uart_tbre),
+        .uart_tsre(uart_tsre),
+        .uart_rdn(uart_rdn),
+        .uart_wrn(uart_wrn)
+    );
 
 endmodule
