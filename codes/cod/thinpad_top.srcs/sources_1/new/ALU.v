@@ -9,7 +9,7 @@ module ALU
     output reg flagOV
 );
 
-    // NOTE: OpCodes
+    // - NOTE: OpCodes
     parameter
         OP_ADD = 4'd1,
         OP_SUB = 4'd2,
@@ -28,7 +28,7 @@ module ALU
     wire[15:0] sraResult;
     ALU_SRA (oprandA, oprandB[3:0], sraResult);
 
-        // NOTE: ALU Logics
+    // - NOTE: ALU Logics
     always @(*) begin
         flagOV = 0;
         case(opCode)
