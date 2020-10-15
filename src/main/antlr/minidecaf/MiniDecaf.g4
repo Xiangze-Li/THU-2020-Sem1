@@ -5,59 +5,72 @@ program
     ;
 
 function
-    : type IDENT '(' ')' '{' statement* '}'
+    : type IDENT '(' ')' '{' blockItem* '}'
     ;
 
 type
     : 'int'
     ;
 
+blockItem
+    : statement         # blockStmt
+    | declearation      # blockDecl
+    ;
+
 statement
     : 'return' expression ';'	# stmtRet
     | expression? ';' 			# stmtExpr
-    | declearation 				# stmtDecl
+    // | declearation 				# stmtDecl
+    // declearation is no longer a statement after step-6
+    | 'if' '(' expression ')' statement ('else' statement)? # stmtIf
     ;
 
 declearation
     : type IDENT ('=' expression)? ';'
     ;
+
 expression
-    : expr_assign
+    : exprAssign
     ;
 
-expr_assign
-    : expr_or
+exprAssign
+    : exprTernary
     | IDENT '=' expression
     ;
 
-expr_or
-    : expr_and
-    | expr_or '||' expr_and
+exprTernary
+    : exprOr
+    | exprOr '?' expression ':' exprTernary
     ;
 
-expr_and
-    : expr_equal
-    | expr_and '&&' expr_equal
+exprOr
+    : exprAnd
+    | exprOr '||' exprAnd
     ;
 
-expr_equal
-    : expr_relation
-    | expr_equal ('=='|'!=') expr_relation
+exprAnd
+    : exprEqual
+    | exprAnd '&&' exprEqual
     ;
 
-expr_relation
-    : expr_add
-    | expr_relation ('<'|'>'|'<='|'>=') expr_add
+exprEqual
+    : exprRelation
+    | exprEqual ('=='|'!=') exprRelation
     ;
 
-expr_add
-    : expr_multiply
-    | expr_add ('+'|'-') expr_multiply
+exprRelation
+    : exprAdd
+    | exprRelation ('<'|'>'|'<='|'>=') exprAdd
     ;
 
-expr_multiply
+exprAdd
+    : exprMultiply
+    | exprAdd ('+'|'-') exprMultiply
+    ;
+
+exprMultiply
     : unary
-    | expr_multiply ('*'|'/'|'%') unary
+    | exprMultiply ('*'|'/'|'%') unary
     ;
 
 unary

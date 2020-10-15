@@ -28,7 +28,7 @@ public class Main
 
         IR ir = visitor.getIR();
 
-        System.out.println(ir.irCode);
+        System.err.println(ir.irCode);
 
         String asm = AsmGen.genAsm(ir);
 
