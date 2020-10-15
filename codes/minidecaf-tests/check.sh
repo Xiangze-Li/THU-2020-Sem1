@@ -8,7 +8,7 @@ else
     export EMU=$SPIKE
 fi
 
-: ${USE_PARALLEL:=true}
+: ${USE_PARALLEL:=false}
 : ${STEP_UNTIL:=12}
 : ${PROJ_PATH:=../minidecaf}
 export PROJ_PATH
