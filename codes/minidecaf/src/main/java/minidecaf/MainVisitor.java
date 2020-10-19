@@ -15,26 +15,19 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     private String currentFunc;
     private boolean containsMain = false;
 
-    private StringBuilder sb; // 生成的IR
+    private StringBuilder ir; // 生成的IR
 
     private LinkedList<HashMap<String, Symbol>> symbolTable;
     private int localCntr;
     private int frameCntr;
 
     private int labelCntr;
-
-    MainVisitor()
-    {
-        this.sb = new StringBuilder();
-        this.symbolTable = new LinkedList<>();
-        this.localCntr = 0;
-        this.frameCntr = 0;
-        this.labelCntr = 0;
-    }
+    private int loopCntr;
+    private LinkedList<Integer> loopStack;
 
     public IR getIR()
     {
-        return new IR(sb.toString(), frameCntr);
+        return new IR(ir.toString(), frameCntr);
     }
 
     @Override
@@ -53,11 +46,11 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         currentFunc = ctx.IDENT().getText();
         if (currentFunc.equals("main")) containsMain = true;
 
-        sb.append("func " + currentFunc + '\n');
+        ir.append("func " + currentFunc + '\n');
 
         visit(ctx.compoundStatement());
 
-        sb.append("endfunc ").append(currentFunc).append('\n');
+        ir.append("endfunc ").append(currentFunc).append('\n');
 
         return new NoType();
     }
@@ -65,13 +58,12 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitCompoundStatement(CompoundStatementContext ctx)
     {
-        symbolTable.push(new HashMap<>());
+        startScope();
 
         for (var blockItem : ctx.blockItem())
             visit(blockItem);
 
-        var local = symbolTable.pop();
-        localCntr -= local.size();
+        localCntr -= endScope();
         return new NoType();
     }
 
@@ -92,7 +84,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     {
         visit(ctx.expression());
 
-        sb.append("\tret\n");
+        ir.append("\tret\n");
 
         return new NoType();
     }
@@ -104,7 +96,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         if (expr != null)
         {
             visit(expr);
-            sb.append("\tpop\n");
+            ir.append("\tpop\n");
         }
         return new NoType();
     }
@@ -120,20 +112,20 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         String elseLable = ".elseif" + this.labelCntr;
 
         if (ctx.statement().size() == 2)
-            sb.append("\tbeqz ").append(elseLable).append('\n');
+            ir.append("\tbeqz ").append(elseLable).append('\n');
         else
-            sb.append("\tbeqz ").append(endLabel).append('\n');
+            ir.append("\tbeqz ").append(endLabel).append('\n');
 
         visit(ctx.statement(0)); // from 'then'
 
         if (ctx.statement().size() == 2)
         {
-            sb.append("\tbr ").append(endLabel).append('\n');
-            sb.append("\tlabel ").append(elseLable).append('\n');
+            ir.append("\tbr ").append(endLabel).append('\n');
+            ir.append("\tlabel ").append(elseLable).append('\n');
             visit(ctx.statement(1));
         }
 
-        sb.append("\tlabel ").append(endLabel).append('\n');
+        ir.append("\tlabel ").append(endLabel).append('\n');
 
         return new NoType();
     }
@@ -142,6 +134,134 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     public Type visitStmtCompound(StmtCompoundContext ctx)
     {
         return visit(ctx.compoundStatement());
+    }
+
+    @Override
+    public Type visitStmtFor(StmtForContext ctx)
+    {
+        int curLoopNo = this.loopCntr++;
+
+        String beginLabel = ".begin_loop" + curLoopNo;
+        String contiLabel = ".continue_loop" + curLoopNo;
+        String breakLabel = ".break_loop" + curLoopNo;
+
+        ExpressionContext pre = null;
+        ExpressionContext cond = null;
+        ExpressionContext post = null;
+
+        for (int i = 0; i < ctx.getChildCount(); i++)
+        {
+            if (ctx.getChild(i) instanceof ExpressionContext)
+            {
+                var expr = (ExpressionContext) ctx.getChild(i);
+                if (ctx.getChild(i - 1).getText().equals("("))
+                    pre = expr;
+                else if (ctx.getChild(i + 1).getText().equals(")"))
+                    post = expr;
+                else
+                    cond = expr;
+            }
+        }
+
+        startScope();
+
+        if (ctx.declearation() != null)
+            visit(ctx.declearation());
+        else
+        {
+            assert (pre != null);
+            visit(pre);
+            ir.append("\tpop\n");
+        }
+
+        ir.append("\tlabel ").append(beginLabel).append('\n');
+
+        if (cond != null) visit(cond);
+
+        ir.append("\tbeqz ").append(breakLabel).append('\n');
+
+        loopStack.push(curLoopNo);
+        visit(ctx.statement());
+        loopStack.pop();
+
+        ir.append("\tlabel ").append(contiLabel).append('\n');
+
+        if (post != null)
+        {
+            visit(post);
+            ir.append("\tpop\n");
+        }
+
+        ir.append("\tbr ").append(beginLabel).append('\n');
+        ir.append("\tlabel ").append(breakLabel).append('\n');
+
+        localCntr -= endScope();
+
+        return new NoType();
+    }
+
+    @Override
+    public Type visitStmtWhile(StmtWhileContext ctx)
+    {
+        int curLoopNo = loopCntr++;
+        String beginLabel = ".begin_loop" + curLoopNo;
+        String contiLabel = ".continue_loop" + curLoopNo;
+        String breakLabel = ".break_loop" + curLoopNo;
+
+        ir.append("\tlabel ").append(beginLabel).append('\n');
+
+        visit(ctx.expression());
+
+        ir.append("\tbeqz ").append(breakLabel).append('\n');
+
+        loopStack.push(curLoopNo);
+        visit(ctx.statement());
+        loopStack.pop();
+
+        ir.append("\tlabel ").append(contiLabel).append('\n');
+        ir.append("\tbr ").append(beginLabel).append('\n');
+        ir.append("\tlabel ").append(breakLabel).append('\n');
+
+        return new NoType();
+    }
+
+    @Override
+    public Type visitStmtDo(StmtDoContext ctx)
+    {
+        int curLoopNo = loopCntr++;
+        String beginLabel = ".begin_loop" + curLoopNo;
+        String contiLabel = ".continue_loop" + curLoopNo;
+        String breakLabel = ".break_loop" + curLoopNo;
+
+        ir.append("\tlabel ").append(beginLabel).append('\n');
+
+        loopStack.push(curLoopNo);
+        visit(ctx.statement());
+        loopStack.pop();
+
+        ir.append("\tlabel ").append(contiLabel).append('\n');
+
+        visit(ctx.expression());
+        ir.append("\tbnqz ").append(beginLabel).append('\n');
+
+        ir.append("\tlabel ").append(breakLabel).append('\n');
+
+        return new NoType();
+    }
+
+    @Override
+    public Type visitStmtBreak(StmtBreakContext ctx)
+    {
+        if (loopStack.isEmpty()) reportError("Using break outside a loop.", ctx);
+        ir.append("\tbr .break_loop").append(loopStack.peek()).append('\n');
+        return new NoType();
+    }
+
+    @Override
+    public Type visitStmtConti(StmtContiContext ctx) {
+        if (loopStack.isEmpty()) reportError("Using continue outside a loop.", ctx);
+        ir.append("\tbr .continue_loop").append(loopStack.peek()).append('\n');
+        return new NoType();
     }
 
     @Override
@@ -158,9 +278,9 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         if (ctx.expression() != null)
         {
             visit(ctx.expression());
-            sb.append("\tframeaddr ").append(localCntr - 1).append('\n');
-            sb.append("\tstore\n");
-            sb.append("\tpop\n");
+            ir.append("\tframeaddr ").append(localCntr - 1).append('\n');
+            ir.append("\tstore\n");
+            ir.append("\tpop\n");
         }
 
         return new NoType();
@@ -188,8 +308,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
             visit(ctx.expression());
 
-            sb.append("\tframeaddr ").append(symbol.offset).append('\n');
-            sb.append("\tstore\n");
+            ir.append("\tframeaddr ").append(symbol.offset).append('\n');
+            ir.append("\tstore\n");
             // sb.append("\tpop\n");
 
             return new IntType();
@@ -208,12 +328,12 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             String elseLable = ".elseter" + this.labelCntr;
 
             visit(ctx.exprOr());
-            sb.append("\tbeqz ").append(elseLable).append('\n');
+            ir.append("\tbeqz ").append(elseLable).append('\n');
             visit(ctx.expression());
-            sb.append("\tbr ").append(endLabel).append('\n');
-            sb.append("\tlabel ").append(elseLable).append('\n');
+            ir.append("\tbr ").append(endLabel).append('\n');
+            ir.append("\tlabel ").append(elseLable).append('\n');
             visit(ctx.exprTernary()); // from 'then'
-            sb.append("\tlabel ").append(endLabel).append('\n');
+            ir.append("\tlabel ").append(endLabel).append('\n');
 
             return new IntType();
 
@@ -233,7 +353,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             assert (ctx.getChildCount() == 3);
             visit(ctx.getChild(0));
             visit(ctx.getChild(2));
-            sb.append("\torl\n");
+            ir.append("\torl\n");
             return new IntType();
         }
     }
@@ -250,7 +370,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             assert (ctx.getChildCount() == 3);
             visit(ctx.getChild(0));
             visit(ctx.getChild(2));
-            sb.append("\tandl\n");
+            ir.append("\tandl\n");
             return new IntType();
         }
     }
@@ -270,10 +390,10 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             switch (ctx.getChild(1).getText())
             {
                 case "==" :
-                    sb.append("\teq\n");
+                    ir.append("\teq\n");
                     break;
                 case "!=" :
-                    sb.append("\tneq\n");
+                    ir.append("\tneq\n");
                     break;
                 default :
                     assert (false);
@@ -298,16 +418,16 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             switch (ctx.getChild(1).getText())
             {
                 case "<" :
-                    sb.append("\tlt\n");
+                    ir.append("\tlt\n");
                     break;
                 case ">" :
-                    sb.append("\tgt\n");
+                    ir.append("\tgt\n");
                     break;
                 case "<=" :
-                    sb.append("\tle\n");
+                    ir.append("\tle\n");
                     break;
                 case ">=" :
-                    sb.append("\tge\n");
+                    ir.append("\tge\n");
                     break;
                 default :
                     assert (false);
@@ -332,10 +452,10 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             switch (ctx.getChild(1).getText())
             {
                 case "+" :
-                    sb.append("\tadd\n");
+                    ir.append("\tadd\n");
                     break;
                 case "-" :
-                    sb.append("\tsub\n");
+                    ir.append("\tsub\n");
                     break;
                 default :
                     assert (false);
@@ -360,13 +480,13 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             switch (ctx.getChild(1).getText())
             {
                 case "*" :
-                    sb.append("\tmul\n");
+                    ir.append("\tmul\n");
                     break;
                 case "/" :
-                    sb.append("\tdiv\n");
+                    ir.append("\tdiv\n");
                     break;
                 case "%" :
-                    sb.append("\trem\n");
+                    ir.append("\trem\n");
                     break;
                 default :
                     assert (false);
@@ -390,13 +510,13 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         switch (ctx.children.get(0).getText())
         {
             case "!" :
-                sb.append("\tnotl\n");
+                ir.append("\tnotl\n");
                 break;
             case "~" :
-                sb.append("\tnotb\n");
+                ir.append("\tnotb\n");
                 break;
             case "-" :
-                sb.append("\tneg\n");
+                ir.append("\tneg\n");
                 break;
             default :
                 assert (false);
@@ -414,7 +534,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         // 数字字面量不能超过整型的最大值
         if (compare(Integer.toString(Integer.MAX_VALUE), num.getText()) == -1) reportError("too large number", ctx);
 
-        sb.append("\tpush ").append(num.getText()).append('\n');
+        ir.append("\tpush ").append(num.getText()).append('\n');
 
         return new IntType();
     }
@@ -433,13 +553,16 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
         if (symbol == null) reportError("Using an undefined variable", ctx);
 
-        sb.append("\tframeaddr ").append(symbol.offset).append('\n');
-        sb.append("\tload\n");
+        ir.append("\tframeaddr ").append(symbol.offset).append('\n');
+        ir.append("\tload\n");
 
         return new IntType();
     }
 
-    /* 一些工具方法 */
+    private void startScope()
+    {
+        symbolTable.push(new HashMap<>());
+    }
 
     private Symbol lookup(String name)
     {
@@ -448,6 +571,11 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             if (local.containsKey(name)) return local.get(name);
         }
         return null;
+    }
+
+    private int endScope()
+    {
+        return symbolTable.pop().size();
     }
 
     /**
@@ -477,5 +605,16 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     {
         throw new RuntimeException("Error(" + ctx.getStart().getLine() + ", " + ctx.getStart().getCharPositionInLine()
                 + "): " + s + ".\n");
+    }
+
+    MainVisitor()
+    {
+        this.ir = new StringBuilder();
+        this.symbolTable = new LinkedList<>();
+        this.localCntr = 0;
+        this.frameCntr = 0;
+        this.labelCntr = 0;
+        this.loopCntr = 0;
+        this.loopStack = new LinkedList<>();
     }
 }
