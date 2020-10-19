@@ -5,11 +5,15 @@ program
     ;
 
 function
-    : type IDENT '(' ')' '{' blockItem* '}'
+    : type IDENT '(' ')' compoundStatement
     ;
 
 type
     : 'int'
+    ;
+
+compoundStatement
+    : '{' blockItem* '}'
     ;
 
 blockItem
@@ -18,11 +22,12 @@ blockItem
     ;
 
 statement
-    : 'return' expression ';'	# stmtRet
-    | expression? ';' 			# stmtExpr
-    // | declearation 				# stmtDecl
-    // declearation is no longer a statement after step-6
+    : 'return' expression ';'                               # stmtRet
+    | expression? ';'                                       # stmtExpr
     | 'if' '(' expression ')' statement ('else' statement)? # stmtIf
+    | compoundStatement                                     # stmtCompound
+    // | declearation                                          # stmtDecl
+    // declearation is no longer a statement after step-6
     ;
 
 declearation
@@ -74,14 +79,14 @@ exprMultiply
     ;
 
 unary
-    : primary				# unaryPrimary
-    | ('-'|'~'|'!') unary	# unaryOp
+    : primary               # unaryPrimary
+    | ('-'|'~'|'!') unary   # unaryOp
     ;
 
 primary
-    : INTEGER				# primIntLit
-    | '(' expression ')'	# primParen
-    | IDENT					# primIdent
+    : INTEGER               # primIntLit
+    | '(' expression ')'    # primParen
+    | IDENT                 # primIdent
     ;
 
 /* lexer */
