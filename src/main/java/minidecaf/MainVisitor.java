@@ -165,20 +165,20 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
         startScope();
 
-        if (ctx.declearation() != null)
-            visit(ctx.declearation());
-        else
+        if (ctx.declearation() != null) visit(ctx.declearation());
+        if (pre != null)
         {
-            assert (pre != null);
             visit(pre);
             ir.append("\tpop\n");
         }
 
         ir.append("\tlabel ").append(beginLabel).append('\n');
 
-        if (cond != null) visit(cond);
-
-        ir.append("\tbeqz ").append(breakLabel).append('\n');
+        if (cond != null)
+        {
+            visit(cond);
+            ir.append("\tbeqz ").append(breakLabel).append('\n');
+        }
 
         loopStack.push(curLoopNo);
         visit(ctx.statement());
@@ -242,7 +242,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         ir.append("\tlabel ").append(contiLabel).append('\n');
 
         visit(ctx.expression());
-        ir.append("\tbnqz ").append(beginLabel).append('\n');
+        ir.append("\tbnez ").append(beginLabel).append('\n');
 
         ir.append("\tlabel ").append(breakLabel).append('\n');
 
@@ -258,7 +258,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     }
 
     @Override
-    public Type visitStmtConti(StmtContiContext ctx) {
+    public Type visitStmtConti(StmtContiContext ctx)
+    {
         if (loopStack.isEmpty()) reportError("Using continue outside a loop.", ctx);
         ir.append("\tbr .continue_loop").append(loopStack.peek()).append('\n');
         return new NoType();
