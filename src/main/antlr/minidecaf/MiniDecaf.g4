@@ -26,8 +26,11 @@ statement
     | expression? ';'                                       # stmtExpr
     | 'if' '(' expression ')' statement ('else' statement)? # stmtIf
     | compoundStatement                                     # stmtCompound
-    // | declearation                                          # stmtDecl
-    // declearation is no longer a statement after step-6
+	| 'for' '(' (declearation | expression? ';') expression? ';' expression? ')' statement   # stmtFor
+	| 'while' '(' expression ')' statement                                  # stmtWhile
+	| 'do' statement 'while' '(' expression ')' ';'                         # stmtDo
+	| 'break' ';'                                                           # stmtBreak
+	| 'continue' ';'                                                        # stmtConti
     ;
 
 declearation
