@@ -2,6 +2,8 @@ package minidecaf;
 
 import java.util.Scanner;
 
+import minidecaf.Type.IntType;
+
 /**
  * AsmGen
  */
@@ -12,47 +14,67 @@ public class AsmGen
 
     public static String genAsm(final IR ir)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder asm = new StringBuilder();
+        StringBuilder data = new StringBuilder("\t.data\n");
+        StringBuilder bss = new StringBuilder();
         String currentFunc = "";
+
+        for (var kv : ir.globalVar.entrySet())
+        {
+            var type = (IntType) kv.getValue();
+            if (type.initVal == null)
+            {
+                bss.append("\t.comm ").append(kv.getKey()).append(',').append(type.getSize()).append(",4\n");
+            }
+            else
+            {
+                data.append("\t.global ").append(kv.getKey()).append('\n');
+                data.append("\t.align 4\n");
+                data.append("\t.size ").append(kv.getKey()).append(',').append(type.getSize()).append('\n');
+                data.append(kv.getKey()).append(":\n\t.word ").append(type.initVal).append('\n');
+            }
+        }
+
+        asm.append(bss.toString()).append(data.toString());
 
         try (Scanner irIn = new Scanner(ir.irCode))
         {
             while (irIn.hasNextLine())
             {
                 String line = irIn.nextLine();
-                sb.append("# ").append(line).append('\n');
+                asm.append("# ").append(line).append('\n');
                 String[] sp = line.strip().split(" ");
 
                 switch (sp[0])
                 {
                     case "func" :
                         currentFunc = sp[1];
-                        doFunc(sb, sp[1], ir.funcFrameSize.get(sp[1]));
+                        doFunc(asm, sp[1], ir.funcFrameSize.get(sp[1]));
                         break;
                     case "endfunc" :
-                        doEpilogue(sb, sp[1], ir.funcFrameSize.get(sp[1]));
+                        doEpilogue(asm, sp[1], ir.funcFrameSize.get(sp[1]));
                         currentFunc = "";
                         break;
                     case "label" :
-                        doLabel(sb, sp[1]);
+                        doLabel(asm, sp[1]);
                         break;
                     case "call" :
-                        doCall(sb, sp[1], sp[2]);
+                        doCall(asm, sp[1], sp[2]);
                         break;
                     case "ret" :
-                        doRet(sb, currentFunc);
+                        doRet(asm, currentFunc);
                         break;
                     case "push" :
-                        doPush(sb, sp[1]);
+                        doPush(asm, sp[1]);
                         break;
                     case "notl" :
-                        doUnaryOp(sb, "seqz");
+                        doUnaryOp(asm, "seqz");
                         break;
                     case "notb" :
-                        doUnaryOp(sb, "not");
+                        doUnaryOp(asm, "not");
                         break;
                     case "neg" :
-                        doUnaryOp(sb, "neg");
+                        doUnaryOp(asm, "neg");
                         break;
                     case "orl" :
                     case "andl" :
@@ -67,26 +89,29 @@ public class AsmGen
                     case "mul" :
                     case "div" :
                     case "rem" :
-                        doBinaryOp(sb, sp[0]);
+                        doBinaryOp(asm, sp[0]);
                         break;
                     case "frameaddr" :
-                        doFrAddr(sb, sp[1]);
+                        doFrAddr(asm, sp[1]);
+                        break;
+                    case "globaladdr" :
+                        doGlAddr(asm, sp[1]);
                         break;
                     case "load" :
-                        doLoad(sb);
+                        doLoad(asm);
                         break;
                     case "store" :
-                        doStore(sb);
+                        doStore(asm);
                         break;
                     case "pop" :
-                        doPop(sb);
+                        doPop(asm);
                         break;
                     case "br" :
-                        doJump(sb, sp[1]);
+                        doJump(asm, sp[1]);
                         break;
                     case "beqz" :
                     case "bnez" :
-                        doBranch(sb, sp[0], sp[1]);
+                        doBranch(asm, sp[0], sp[1]);
                         break;
                     default :
                         assert (false);
@@ -95,155 +120,159 @@ public class AsmGen
             }
         }
 
-        return sb.toString();
+        return asm.toString();
     }
 
-    private static void doCall(final StringBuilder sb, final String funcName, final String paramSize)
+    private static void doGlAddr(StringBuilder asm, String var)
     {
-        sb.append("\tjal ").append(funcName).append('\n');
-        sb.append("\taddi sp,sp,4*").append(paramSize).append('\n');
-        mPush(sb, "a0");
+        asm.append("\tla t1,").append(var).append('\n');
+        mPush(asm, "t1");
     }
 
-    private static void doBranch(StringBuilder sb, String whatBr, String toWhere)
+    private static void doCall(final StringBuilder asm, final String funcName, final String paramSize)
     {
-        mPop(sb, "t1");
-        sb.append('\t').append(whatBr).append(" t1,").append(toWhere).append('\n');
+        asm.append("\tjal ").append(funcName).append('\n');
+        asm.append("\taddi sp,sp,4*").append(paramSize).append('\n');
+        mPush(asm, "a0");
     }
 
-    private static void doJump(StringBuilder sb, String toWhere)
+    private static void doBranch(StringBuilder asm, String whatBr, String toWhere)
     {
-        sb.append("\tj ").append(toWhere).append('\n');
+        mPop(asm, "t1");
+        asm.append('\t').append(whatBr).append(" t1,").append(toWhere).append('\n');
     }
 
-    private static void doEpilogue(final StringBuilder sb, final String label, final int localVarCntr)
+    private static void doJump(StringBuilder asm, String toWhere)
     {
-        // sb.append("\t# 0 for funcs w.o. return\n");
-        doPush(sb, "0");
-        // sb.append('\n');
-        doLabel(sb, label + "_epilogue");
+        asm.append("\tj ").append(toWhere).append('\n');
+    }
+
+    private static void doEpilogue(final StringBuilder asm, final String label, final int localVarCntr)
+    {
+        doPush(asm, "0");
+        doLabel(asm, label + "_epilogue");
         int framesize = 8 + 4 * localVarCntr;
-        mPop(sb, "a0");
-        sb.append("\tlw fp,").append(framesize).append("-8(sp)\n");
-        sb.append("\tlw ra,").append(framesize).append("-4(sp)\n");
-        sb.append("\taddi sp,sp,").append(framesize).append('\n');
-        sb.append("\tjr ra\n");
+        mPop(asm, "a0");
+        asm.append("\tlw fp,").append(framesize).append("-8(sp)\n");
+        asm.append("\tlw ra,").append(framesize).append("-4(sp)\n");
+        asm.append("\taddi sp,sp,").append(framesize).append('\n');
+        asm.append("\tjr ra\n");
     }
 
-    private static void mPop(final StringBuilder sb, final String toWhere)
+    private static void mPop(final StringBuilder asm, final String toWhere)
     {
-        sb.append("\tlw ").append(toWhere).append(",0(sp)\n");
-        sb.append("\taddi sp,sp,4\n");
+        asm.append("\tlw ").append(toWhere).append(",0(sp)\n");
+        asm.append("\taddi sp,sp,4\n");
     }
 
-    private static void mPush(final StringBuilder sb, final String fromWhere)
+    private static void mPush(final StringBuilder asm, final String fromWhere)
     {
-        sb.append("\taddi sp,sp,-4\n");
-        sb.append("\tsw ").append(fromWhere).append(",0(sp)\n");
+        asm.append("\taddi sp,sp,-4\n");
+        asm.append("\tsw ").append(fromWhere).append(",0(sp)\n");
     }
 
-    private static void doFrAddr(final StringBuilder sb, final String offset)
+    private static void doFrAddr(final StringBuilder asm, final String offset)
     {
-        sb.append("\taddi t1,fp,-12-4*").append(offset).append('\n');
-        mPush(sb, "t1");
+        asm.append("\taddi t1,fp,-12-4*").append(offset).append('\n');
+        mPush(asm, "t1");
     }
 
-    private static void doFunc(final StringBuilder sb, final String label, final int localVarCntr)
+    private static void doFunc(final StringBuilder asm, final String label, final int localVarCntr)
     {
-        sb.append('\n');
-        sb.append("\t.text\n\t.global ").append(label).append('\n');
-        doLabel(sb, label);
+        asm.append('\n');
+        asm.append("\t.text\n\t.global ").append(label).append('\n');
+        doLabel(asm, label);
 
         // prologue
         int framesize = 8 + 4 * localVarCntr;
-        sb.append("\taddi sp,sp,-").append(framesize).append('\n');
-        sb.append("\tsw ra,").append(framesize).append("-4(sp)\n");
-        sb.append("\tsw fp,").append(framesize).append("-8(sp)\n");
-        sb.append("\taddi fp,sp,").append(framesize).append('\n');
+        asm.append("\taddi sp,sp,-").append(framesize).append('\n');
+        asm.append("\tsw ra,").append(framesize).append("-4(sp)\n");
+        asm.append("\tsw fp,").append(framesize).append("-8(sp)\n");
+        asm.append("\taddi fp,sp,").append(framesize).append('\n');
     }
 
-    private static void doLabel(final StringBuilder sb, final String label)
+    private static void doLabel(final StringBuilder asm, final String label)
     {
-        sb.append(label).append(":\n");
+        asm.append(label).append(":\n");
     }
 
-    private static void doPush(final StringBuilder sb, final String pushWhat)
+    private static void doPush(final StringBuilder asm, final String pushWhat)
     {
-        sb.append("\tli t1,").append(pushWhat).append('\n');
-        mPush(sb, "t1");
+        asm.append("\tli t1,").append(pushWhat).append('\n');
+        mPush(asm, "t1");
     }
 
-    private static void doRet(final StringBuilder sb, final String fromWhichFunc)
+    private static void doRet(final StringBuilder asm, final String fromWhichFunc)
     {
-        sb.append("\tj ").append(fromWhichFunc).append("_epilogue\n");
+        asm.append("\tj ").append(fromWhichFunc).append("_epilogue\n");
     }
 
-    private static void doStore(final StringBuilder sb)
+    private static void doStore(final StringBuilder asm)
     {
-        sb.append("\tlw t1,4(sp)\n").append("\tlw t2,0(sp)\n");
-        sb.append("\taddi sp,sp,4\n").append("\tsw t1,0(t2)\n");
+        asm.append("\tlw t1,4(sp)\n").append("\tlw t2,0(sp)\n");
+        asm.append("\taddi sp,sp,4\n").append("\tsw t1,0(t2)\n");
     }
 
-    private static void doLoad(final StringBuilder sb)
+    private static void doLoad(final StringBuilder asm)
     {
-        sb.append("\tlw t1,0(sp)\n").append("\tlw t1,0(t1)\n").append("\tsw t1,0(sp)\n");
+        asm.append("\tlw t1,0(sp)\n").append("\tlw t1,0(t1)\n").append("\tsw t1,0(sp)\n");
     }
 
-    private static void doUnaryOp(final StringBuilder sb, final String whatOp)
+    private static void doUnaryOp(final StringBuilder asm, final String whatOp)
     {
-        mPop(sb, "t1");
-        sb.append("\t").append(whatOp).append(" t1,t1\n");
-        mPush(sb, "t1");
+        mPop(asm, "t1");
+        asm.append("\t").append(whatOp).append(" t1,t1\n");
+        mPush(asm, "t1");
     }
 
-    private static void doBinaryOp(final StringBuilder sb, final String whatOp)
+    private static void doBinaryOp(final StringBuilder asm, final String whatOp)
     {
-        sb.append("\tlw t1,4(sp)\n").append("\tlw t2,0(sp)\n");
+        asm.append("\tlw t1,4(sp)\n").append("\tlw t2,0(sp)\n");
 
         switch (whatOp)
         {
             case "orl" :
-                sb.append("\tor t1,t1,t2\n").append("\tsnez t1,t1\n");
+                asm.append("\tor t1,t1,t2\n").append("\tsnez t1,t1\n");
                 break;
             case "andl" :
-                sb.append("\tsnez t1,t1\n").append("\tsnez t2,t2\n");
-                sb.append("\tand t1,t1,t2\n");
+                asm.append("\tsnez t1,t1\n").append("\tsnez t2,t2\n");
+                asm.append("\tand t1,t1,t2\n");
                 break;
             case "eq" :
-                sb.append("\tsub t1,t1,t2\n").append("\tseqz t1,t1\n");
+                asm.append("\tsub t1,t1,t2\n").append("\tseqz t1,t1\n");
                 break;
             case "neq" :
-                sb.append("\tsub t1,t1,t2\n").append("\tsnez t1,t1\n");
+                asm.append("\tsub t1,t1,t2\n").append("\tsnez t1,t1\n");
                 break;
             case "lt" :
-                sb.append("\tslt t1,t1,t2\n");
+                asm.append("\tslt t1,t1,t2\n");
                 break;
             case "gt" :
-                sb.append("\tslt t1,t2,t1\n");
+                asm.append("\tslt t1,t2,t1\n");
                 break;
             case "le" :
-                sb.append("\tslt t1,t2,t1\n").append("\txori t1,t1,1\n");
+                asm.append("\tslt t1,t2,t1\n").append("\txori t1,t1,1\n");
                 break;
             case "ge" :
-                sb.append("\tslt t1,t1,t2\n").append("\txori t1,t1,1\n");
+                asm.append("\tslt t1,t1,t2\n").append("\txori t1,t1,1\n");
                 break;
             case "add" :
             case "sub" :
             case "mul" :
             case "div" :
             case "rem" :
-                sb.append("\t").append(whatOp).append(" t1,t1,t2\n");
+                asm.append("\t").append(whatOp).append(" t1,t1,t2\n");
                 break;
             default :
                 assert (false);
                 break;
         }
 
-        sb.append("\taddi sp,sp,4\n").append("\tsw t1,0(sp)\n");
+        asm.append("\taddi sp,sp,4\n").append("\tsw t1,0(sp)\n");
     }
 
-    private static void doPop(final StringBuilder sb)
+    private static void doPop(final StringBuilder asm)
     {
-        sb.append("\taddi sp,sp,4\n");
+        asm.append("\taddi sp,sp,4\n");
     }
 }

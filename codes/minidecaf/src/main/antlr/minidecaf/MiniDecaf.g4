@@ -1,7 +1,11 @@
 grammar MiniDecaf;
 
 program
-    : function* EOF
+    : (function | declGlobal)* EOF
+    ;
+
+declGlobal
+    : type IDENT ('=' INTEGER)? ';'
     ;
 
 function

@@ -18,6 +18,8 @@ public abstract class Type
 
     public abstract boolean equals(Type type); // 判断两个 Type 是否相等
 
+    public abstract int getSize();
+
     /**
      * 用于语句、声明等没有类型的分析树节点
      */
@@ -33,6 +35,12 @@ public abstract class Type
         {
             return type instanceof NoType;
         }
+
+        @Override
+        public int getSize()
+        {
+            throw new UnsupportedOperationException("Error: trying getting the size of NoType.");
+        }
     }
 
     /**
@@ -40,15 +48,30 @@ public abstract class Type
      */
     public static class IntType extends Type
     {
+        public Integer initVal;
+
         public IntType()
         {
             super("IntType");
+            this.initVal = null;
+        }
+
+        public IntType(final int initVal)
+        {
+            super("IntType");
+            this.initVal = initVal;
         }
 
         @Override
         public boolean equals(Type type)
         {
             return type instanceof IntType;
+        }
+
+        @Override
+        public int getSize()
+        {
+            return 4;
         }
     }
 }

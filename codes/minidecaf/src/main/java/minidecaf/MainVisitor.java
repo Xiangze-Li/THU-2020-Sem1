@@ -17,34 +17,89 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     /* 函数相关 */
     private String currentFunc;
     private boolean containsMain = false;
+    private Map<String, Func> funcDeclared;
+    private Map<String, Func> funcDefined;
+    private Map<String, Integer> funcFrameSize;
 
     private StringBuilder ir; // 生成的IR
 
-    private Deque<Map<String, Symbol>> symbolTable;
+    // 变量相关
     private int localCntr;
     private int frameCntr;
+    private Deque<Map<String, Symbol>> symbolTable;
+    private Map<String, Type> globDeclared;
+    // private Map<String, Type> globDefined;
+    // private Map<String, Integer> globDefVal;
 
     private int labelCntr;
     private int loopCntr;
     private LinkedList<Integer> loopStack;
 
-    private Map<String, Func> funcDeclared;
-    private Map<String, Func> funcDefined;
-    private Map<String, Integer> funcFrameSize;
-
     public IR getIR()
     {
-        return new IR(ir.toString(), funcFrameSize);
+        return new IR(ir.toString(), funcFrameSize, globDeclared);
     }
 
     @Override
     public Type visitProgram(ProgramContext ctx)
     {
-        for (var func : ctx.function())
-            visit(func);
+        visitChildren(ctx);
 
         if (!containsMain) reportError("no main function", ctx);
 
+        // for ()
+
+        return new NoType();
+    }
+
+    @Override
+    public Type visitDeclGlobal(DeclGlobalContext ctx)
+    {
+        String name = ctx.IDENT().getText();
+        if (funcDeclared.containsKey(name)) reportError("A global variable and a function have the same name", ctx);
+
+        Type type = visit(ctx.type());
+        Type stored = globDeclared.get(name);
+
+        if (stored == null)
+        {
+            var num = ctx.INTEGER();
+            if (num != null)
+            {
+                IntType intType = (IntType) type;
+                intType.initVal = Integer.valueOf(num.getText());
+            }
+        }
+        else
+        {
+            if (!stored.equals(type)) reportError("Different global variables with same name are declared", ctx);
+            var num = ctx.INTEGER();
+            if (num != null)
+            {
+                IntType intStored = (IntType) stored;
+                if (intStored.initVal != null) reportError("Initializing a global variable twice", ctx);
+                IntType intType = (IntType) type;
+                intType.initVal = Integer.valueOf(num.getText());
+            }
+        }
+        globDeclared.put(name, type);
+
+        // if (globDeclared.containsKey(name) && !globDeclared.get(name).equals(type))
+        // reportError("Different global variables with same name are declared", ctx);
+
+        // globDeclared.put(name, type);
+        // // globDefVal.put(name, null);
+
+        // var num = ctx.INTEGER();
+        // if (num != null)
+        // {
+        // if (globDefined.containsKey(name)) reportError("Initializing a global variable twice", ctx);
+        // globDefined.put(name, type);
+        // globDefVal.put(name, Integer.valueOf(num.getText()));
+        // // sb.append("\t.data\n") // 全局变量要放在 data 段中
+        // // .append("\t.align 4\n") // 4 字节对齐
+        // // .append(name + ":\n").append("\t.word " + num.getText() + "\n"); // word 表示一个 32 位字
+        // }
         return new NoType();
     }
 
@@ -52,6 +107,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     public Type visitFuncDecl(FuncDeclContext ctx)
     {
         String name = ctx.IDENT(0).getText();
+        if (globDeclared.containsKey(name)) reportError("Function name duplicated with global var", ctx);
 
         Type returnType = visit(ctx.type(0));
         ArrayList<Type> paramTypes = new ArrayList<>();
@@ -75,6 +131,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     public Type visitFuncDef(FuncDefContext ctx)
     {
         currentFunc = ctx.IDENT(0).getText();
+        if (globDeclared.containsKey(currentFunc)) reportError("Function name duplicated with global var", ctx);
         if (currentFunc.equals("main")) containsMain = true;
 
         if (funcDefined.containsKey(currentFunc)) reportError("Re-Defining function", ctx);
@@ -92,8 +149,6 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         funcDeclared.put(currentFunc, func);
 
         ir.append("func " + currentFunc + '\n');
-        // int funcHeaderPos = ir.length();
-        // ir.append("func ").append(currentFunc).append('\n');
 
         localCntr = 0;
         frameCntr = 0;
@@ -113,7 +168,6 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         endScope();
         this.funcFrameSize.put(currentFunc, frameCntr);
 
-        // ir.insert(funcHeaderPos, "func " + currentFunc + ' ' + frameCntr + '\n');
         ir.append("endfunc ").append(currentFunc).append('\n');
 
         return new NoType();
@@ -368,15 +422,29 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             assert (ctx.getChildCount() == 3);
             String name = ctx.IDENT().getText();
             Symbol symbol = this.lookup(name);
-            if (symbol == null) reportError("Using an undefined variable", ctx);
+            if (symbol != null)
+            {
+                visit(ctx.expression());
 
-            visit(ctx.expression());
+                ir.append("\tframeaddr ").append(symbol.offset).append('\n');
+                ir.append("\tstore\n");
 
-            ir.append("\tframeaddr ").append(symbol.offset).append('\n');
-            ir.append("\tstore\n");
-            // sb.append("\tpop\n");
+                return symbol.type;
+            }
+            else if (globDeclared.containsKey(name))
+            {
+                visit(ctx.expression());
 
-            return new IntType();
+                ir.append("\tglobaladdr ").append(name).append('\n');
+                ir.append("\tstore\n");
+
+                return globDeclared.get(name);
+            }
+            else
+            {
+                reportError("Using an undefined variable", ctx);
+                return new NoType();
+            }
         }
     }
 
@@ -640,12 +708,23 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         String name = ctx.IDENT().getText();
         Symbol symbol = this.lookup(name);
 
-        if (symbol == null) reportError("Using an undefined variable", ctx);
-
-        ir.append("\tframeaddr ").append(symbol.offset).append('\n');
-        ir.append("\tload\n");
-
-        return new IntType();
+        if (symbol != null)
+        {
+            ir.append("\tframeaddr ").append(symbol.offset).append('\n');
+            ir.append("\tload\n");
+            return symbol.type;
+        }
+        else if (globDeclared.containsKey(name))
+        {
+            ir.append("\tglobaladdr ").append(name).append('\n');
+            ir.append("\tload\n");
+            return globDeclared.get(name);
+        }
+        else
+        {
+            reportError("Using an undefined variable", ctx);
+            return new NoType();
+        }
     }
 
     @Override
@@ -723,5 +802,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         this.funcDeclared = new HashMap<>();
         this.funcDefined = new HashMap<>();
         this.funcFrameSize = new HashMap<>();
+        this.globDeclared = new HashMap<>();
+        // this.globDefined = new HashMap<>();
+        // this.globDefVal = new HashMap<>();
     }
 }
