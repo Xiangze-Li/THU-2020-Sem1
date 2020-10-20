@@ -99,7 +99,6 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         frameCntr = 0;
         startScope();
 
-        // TODO: 展开参数列表
         for (int i = 1; i < ctx.IDENT().size(); i++)
         {
             String name = ctx.IDENT(i).getText();
@@ -594,7 +593,6 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitPostfix(PostfixContext ctx)
     {
-        // TODO: visitPostfix
         if (ctx.getChildCount() == 1)
             return visit(ctx.primary());
         else
