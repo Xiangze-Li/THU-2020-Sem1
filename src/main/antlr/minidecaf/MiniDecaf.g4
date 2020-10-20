@@ -1,11 +1,12 @@
 grammar MiniDecaf;
 
 program
-    : function EOF
+    : function* EOF
     ;
 
 function
-    : type IDENT '(' ')' compoundStatement
+    : type IDENT '(' (type IDENT (',' type IDENT)*)? ')' ';'                # funcDecl
+	| type IDENT '(' (type IDENT (',' type IDENT)*)? ')' '{' blockItem* '}' # funcDef
     ;
 
 type
@@ -82,8 +83,13 @@ exprMultiply
     ;
 
 unary
-    : primary               # unaryPrimary
+    : postfix               # unaryPostfix
     | ('-'|'~'|'!') unary   # unaryOp
+    ;
+
+postfix
+    : primary
+	| IDENT '(' (expression (',' expression)* )? ')'
     ;
 
 primary

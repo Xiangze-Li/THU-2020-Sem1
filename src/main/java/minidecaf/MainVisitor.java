@@ -3,8 +3,11 @@ package minidecaf;
 import minidecaf.MiniDecafParser.*;
 import minidecaf.Type.*;
 
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
@@ -17,7 +20,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
     private StringBuilder ir; // 生成的IR
 
-    private LinkedList<HashMap<String, Symbol>> symbolTable;
+    private Deque<Map<String, Symbol>> symbolTable;
     private int localCntr;
     private int frameCntr;
 
@@ -25,15 +28,20 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     private int loopCntr;
     private LinkedList<Integer> loopStack;
 
+    private Map<String, Func> funcDeclared;
+    private Map<String, Func> funcDefined;
+    private Map<String, Integer> funcFrameSize;
+
     public IR getIR()
     {
-        return new IR(ir.toString(), frameCntr);
+        return new IR(ir.toString(), funcFrameSize);
     }
 
     @Override
     public Type visitProgram(ProgramContext ctx)
     {
-        visit(ctx.function());
+        for (var func : ctx.function())
+            visit(func);
 
         if (!containsMain) reportError("no main function", ctx);
 
@@ -41,15 +49,72 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     }
 
     @Override
-    public Type visitFunction(FunctionContext ctx)
+    public Type visitFuncDecl(FuncDeclContext ctx)
     {
-        currentFunc = ctx.IDENT().getText();
+        String name = ctx.IDENT(0).getText();
+
+        Type returnType = visit(ctx.type(0));
+        ArrayList<Type> paramTypes = new ArrayList<>();
+        for (int i = 1; i < ctx.type().size(); i++)
+            paramTypes.add(visit(ctx.type(i)));
+        Func func = new Func(returnType, paramTypes);
+
+        if (funcDeclared.containsKey(name) && !funcDeclared.get(name).equals(func))
+            reportError("Redeclaring a function with diffrent params", ctx);
+
+        funcDeclared.put(name, func);
+
+        return new NoType();
+    }
+
+    /**
+     * 参数传递规范: 所有参数逆序压栈. 那么, 第 k (>=0) 个参数相对子函数 fp 的偏移量是 4*k. 考虑函数访问第 l (>=0) 个局部变量的方式是 -12-4*l, 可以得知对应的偏移量是 l = -3-k
+     *
+     */
+    @Override
+    public Type visitFuncDef(FuncDefContext ctx)
+    {
+        currentFunc = ctx.IDENT(0).getText();
         if (currentFunc.equals("main")) containsMain = true;
 
+        if (funcDefined.containsKey(currentFunc)) reportError("Re-Defining function", ctx);
+
+        Type returnType = visit(ctx.type(0));
+        ArrayList<Type> paramTypes = new ArrayList<>();
+        for (int i = 1; i < ctx.type().size(); i++)
+            paramTypes.add(visit(ctx.type(i)));
+        Func func = new Func(returnType, paramTypes);
+
+        if (funcDeclared.containsKey(currentFunc) && !funcDeclared.get(currentFunc).equals(func))
+            reportError("Function definition doesn't match declaration", ctx);
+
+        funcDefined.put(currentFunc, func);
+        funcDeclared.put(currentFunc, func);
+
         ir.append("func " + currentFunc + '\n');
+        // int funcHeaderPos = ir.length();
+        // ir.append("func ").append(currentFunc).append('\n');
 
-        visit(ctx.compoundStatement());
+        localCntr = 0;
+        frameCntr = 0;
+        startScope();
 
+        // TODO: 展开参数列表
+        for (int i = 1; i < ctx.IDENT().size(); i++)
+        {
+            String name = ctx.IDENT(i).getText();
+            if (symbolTable.peek().containsKey(name)) reportError("Function parameter name duplicated", ctx);
+            symbolTable.peek().put(name, new Symbol(name, -2 - i, paramTypes.get(i - 1)));
+        }
+
+        // visit(ctx.compoundStatement());
+        for (var line : ctx.blockItem())
+            visit(line);
+
+        endScope();
+        this.funcFrameSize.put(currentFunc, frameCntr);
+
+        // ir.insert(funcHeaderPos, "func " + currentFunc + ' ' + frameCntr + '\n');
         ir.append("endfunc ").append(currentFunc).append('\n');
 
         return new NoType();
@@ -273,8 +338,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
         symbolTable.peek().put(name, new Symbol(name, localCntr, new IntType()));
 
-        localCntr++;
-        if (localCntr > frameCntr) frameCntr = localCntr;
+        declLocalVar();
 
         if (ctx.expression() != null)
         {
@@ -498,9 +562,9 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     }
 
     @Override
-    public Type visitUnaryPrimary(UnaryPrimaryContext ctx)
+    public Type visitUnaryPostfix(UnaryPostfixContext ctx)
     {
-        return visit(ctx.primary());
+        return visit(ctx.postfix());
     }
 
     @Override
@@ -525,6 +589,32 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         }
 
         return new IntType();
+    }
+
+    @Override
+    public Type visitPostfix(PostfixContext ctx)
+    {
+        // TODO: visitPostfix
+        if (ctx.getChildCount() == 1)
+            return visit(ctx.primary());
+        else
+        {
+            String name = ctx.IDENT().getText();
+            Func func = funcDeclared.get(name);
+            if (func == null) reportError("Calling un-declared function", ctx);
+            if (func.paramTypes.size() != ctx.expression().size())
+                reportError("Number of arguments doesn't match with param number", ctx);
+
+            for (int i = ctx.expression().size() - 1; i >= 0; i--)
+                visit(ctx.expression(i));
+
+            ir.append("\tcall ").append(name).append(' ').append(func.paramTypes.size()).append('\n');
+
+            // NOTE: The caller shouldn't pop the arguments.
+            // this work is handled by IR-ASM generater.
+
+            return new IntType();
+        }
     }
 
     @Override
@@ -560,6 +650,15 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         return new IntType();
     }
 
+    @Override
+    public Type visitType(TypeContext ctx)
+    {
+        assert (ctx.getText().equals("int"));
+        return new IntType();
+    }
+
+    // NOTE: Visitors Ends Here
+
     private void startScope()
     {
         symbolTable.push(new HashMap<>());
@@ -577,6 +676,12 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     private int endScope()
     {
         return symbolTable.pop().size();
+    }
+
+    private void declLocalVar()
+    {
+        localCntr++;
+        if (localCntr > frameCntr) frameCntr = localCntr;
     }
 
     /**
@@ -617,5 +722,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         this.labelCntr = 0;
         this.loopCntr = 0;
         this.loopStack = new LinkedList<>();
+        this.funcDeclared = new HashMap<>();
+        this.funcDefined = new HashMap<>();
+        this.funcFrameSize = new HashMap<>();
     }
 }
