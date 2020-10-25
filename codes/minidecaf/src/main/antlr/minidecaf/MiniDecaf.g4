@@ -14,7 +14,7 @@ function
     ;
 
 type
-    : 'int'
+    : 'int' '*'*
     ;
 
 compoundStatement
@@ -48,7 +48,7 @@ expression
 
 exprAssign
     : exprTernary
-    | IDENT '=' expression
+    | unary '=' expression
     ;
 
 exprTernary
@@ -89,6 +89,8 @@ exprMultiply
 unary
     : postfix               # unaryPostfix
     | ('-'|'~'|'!') unary   # unaryOp
+    | ('*'|'&') unary       # unaryAddr
+    | '(' type ')' unary    # unaryCast
     ;
 
 postfix

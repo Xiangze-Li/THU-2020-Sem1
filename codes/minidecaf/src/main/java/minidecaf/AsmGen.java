@@ -21,18 +21,20 @@ public class AsmGen
 
         for (var kv : ir.globalVar.entrySet())
         {
-            var type = (IntType) kv.getValue();
-            if (type.initVal == null)
+            Type t = kv.getValue();
+            if (!(t instanceof IntType) || ((IntType) t).initVal == null)
             {
-                bss.append("\t.comm ").append(kv.getKey()).append(',').append(type.getSize()).append(",4\n");
+                bss.append("\t.comm ").append(kv.getKey()).append(',').append(t.getSize()).append(",4\n");
             }
             else
             {
+                var type = (IntType) t;
                 data.append("\t.global ").append(kv.getKey()).append('\n');
                 data.append("\t.align 4\n");
                 data.append("\t.size ").append(kv.getKey()).append(',').append(type.getSize()).append('\n');
                 data.append(kv.getKey()).append(":\n\t.word ").append(type.initVal).append('\n');
             }
+
         }
 
         asm.append(bss.toString()).append(data.toString());
@@ -210,7 +212,9 @@ public class AsmGen
     private static void doStore(final StringBuilder asm)
     {
         asm.append("\tlw t1,4(sp)\n").append("\tlw t2,0(sp)\n");
-        asm.append("\taddi sp,sp,4\n").append("\tsw t1,0(t2)\n");
+        asm.append("\taddi sp,sp,4\n");
+        asm.append("\tsw t1,0(t2)\n");
+        asm.append("\tsw t2,0(sp)\n");
     }
 
     private static void doLoad(final StringBuilder asm)

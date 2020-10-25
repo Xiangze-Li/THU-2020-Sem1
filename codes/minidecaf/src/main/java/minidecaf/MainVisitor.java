@@ -82,24 +82,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
                 intType.initVal = Integer.valueOf(num.getText());
             }
         }
-        globDeclared.put(name, type);
+        globDeclared.put(name, type.valueCast(ValueCat.LVALUE));
 
-        // if (globDeclared.containsKey(name) && !globDeclared.get(name).equals(type))
-        // reportError("Different global variables with same name are declared", ctx);
-
-        // globDeclared.put(name, type);
-        // // globDefVal.put(name, null);
-
-        // var num = ctx.INTEGER();
-        // if (num != null)
-        // {
-        // if (globDefined.containsKey(name)) reportError("Initializing a global variable twice", ctx);
-        // globDefined.put(name, type);
-        // globDefVal.put(name, Integer.valueOf(num.getText()));
-        // // sb.append("\t.data\n") // 全局变量要放在 data 段中
-        // // .append("\t.align 4\n") // 4 字节对齐
-        // // .append(name + ":\n").append("\t.word " + num.getText() + "\n"); // word 表示一个 32 位字
-        // }
         return new NoType();
     }
 
@@ -158,7 +142,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         {
             String name = ctx.IDENT(i).getText();
             if (symbolTable.peek().containsKey(name)) reportError("Function parameter name duplicated", ctx);
-            symbolTable.peek().put(name, new Symbol(name, -2 - i, paramTypes.get(i - 1)));
+            symbolTable.peek().put(name, new Symbol(name, -2 - i, paramTypes.get(i - 1).valueCast(ValueCat.LVALUE)));
         }
 
         // visit(ctx.compoundStatement());
@@ -200,7 +184,10 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitStmtRet(StmtRetContext ctx)
     {
-        visit(ctx.expression());
+        Type returnType = castToRValue(visit(ctx.expression()), ctx);
+        Type expectedType = funcDefined.get(currentFunc).returnType;
+        if (!expectedType.equals(returnType))
+            reportError("Return type " + returnType + " is inconsitent with expected return type " + expectedType, ctx);
 
         ir.append("\tret\n");
 
@@ -224,7 +211,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     {
         this.labelCntr++;
 
-        visit(ctx.expression());
+        typeCheck(visit(ctx.expression()), IntType.class, ctx);
 
         String endLabel = ".endif" + this.labelCntr;
         String elseLable = ".elseif" + this.labelCntr;
@@ -294,7 +281,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
         if (cond != null)
         {
-            visit(cond);
+            typeCheck(visit(cond), IntType.class, ctx);
             ir.append("\tbeqz ").append(breakLabel).append('\n');
         }
 
@@ -328,7 +315,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
         ir.append("\tlabel ").append(beginLabel).append('\n');
 
-        visit(ctx.expression());
+        typeCheck(visit(ctx.expression()), IntType.class, ctx);
 
         ir.append("\tbeqz ").append(breakLabel).append('\n');
 
@@ -359,7 +346,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
         ir.append("\tlabel ").append(contiLabel).append('\n');
 
-        visit(ctx.expression());
+        typeCheck(visit(ctx.expression()), IntType.class, ctx);
         ir.append("\tbnez ").append(beginLabel).append('\n');
 
         ir.append("\tlabel ").append(breakLabel).append('\n');
@@ -389,13 +376,17 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         String name = ctx.IDENT().getText();
         if (symbolTable.peek().get(name) != null) reportError("Re-Declearing an existing variable", ctx);
 
-        symbolTable.peek().put(name, new Symbol(name, localCntr, new IntType()));
+        Type type = visit(ctx.type());
+
+        symbolTable.peek().put(name, new Symbol(name, localCntr, type.valueCast(ValueCat.LVALUE)));
 
         declLocalVar();
 
         if (ctx.expression() != null)
         {
-            visit(ctx.expression());
+            Type exprType = castToRValue(visit(ctx.expression()), ctx);
+            if (!exprType.equals(type))
+                reportError("Initialize value of type " + exprType + " to some variable of type " + type, ctx);
             ir.append("\tframeaddr ").append(localCntr - 1).append('\n');
             ir.append("\tstore\n");
             ir.append("\tpop\n");
@@ -420,31 +411,15 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         else
         {
             assert (ctx.getChildCount() == 3);
-            String name = ctx.IDENT().getText();
-            Symbol symbol = this.lookup(name);
-            if (symbol != null)
-            {
-                visit(ctx.expression());
+            // NOTE: 以下两行顺序不可交换. 关乎于地址和表达式的值在 IR 计算栈中的顺序.
+            Type exprType = castToRValue(visit(ctx.expression()), ctx);
+            Type unaryType = typeCheck(visit(ctx.unary()), Type.class, ValueCat.LVALUE, ctx);
+            if (!exprType.equals(unaryType.valueCast(ValueCat.RVALUE)))
+                reportError("Assign value of type " + exprType + " to some variable of type " + unaryType, ctx);
 
-                ir.append("\tframeaddr ").append(symbol.offset).append('\n');
-                ir.append("\tstore\n");
+            ir.append("\tstore\n");
 
-                return symbol.type;
-            }
-            else if (globDeclared.containsKey(name))
-            {
-                visit(ctx.expression());
-
-                ir.append("\tglobaladdr ").append(name).append('\n');
-                ir.append("\tstore\n");
-
-                return globDeclared.get(name);
-            }
-            else
-            {
-                reportError("Using an undefined variable", ctx);
-                return new NoType();
-            }
+            return unaryType;
         }
     }
 
@@ -459,18 +434,17 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             String endLabel = ".endter" + this.labelCntr;
             String elseLable = ".elseter" + this.labelCntr;
 
-            visit(ctx.exprOr());
+            typeCheck(visit(ctx.exprOr()), IntType.class, ctx);
             ir.append("\tbeqz ").append(elseLable).append('\n');
-            visit(ctx.expression());
+            Type thenType = castToRValue(visit(ctx.expression()), ctx);
             ir.append("\tbr ").append(endLabel).append('\n');
             ir.append("\tlabel ").append(elseLable).append('\n');
-            visit(ctx.exprTernary()); // from 'then'
+            Type elseType = castToRValue(visit(ctx.exprTernary()), ctx);
             ir.append("\tlabel ").append(endLabel).append('\n');
 
-            return new IntType();
-
+            if (!thenType.equals(elseType)) reportError("Different types of branches of a ternary", ctx);
+            return thenType;
         }
-
     }
 
     @Override
@@ -483,8 +457,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         else
         {
             assert (ctx.getChildCount() == 3);
-            visit(ctx.getChild(0));
-            visit(ctx.getChild(2));
+            typeCheck(visit(ctx.getChild(0)), IntType.class, ctx);
+            typeCheck(visit(ctx.getChild(2)), IntType.class, ctx);
             ir.append("\torl\n");
             return new IntType();
         }
@@ -500,8 +474,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         else
         {
             assert (ctx.getChildCount() == 3);
-            visit(ctx.getChild(0));
-            visit(ctx.getChild(2));
+            typeCheck(visit(ctx.getChild(0)), IntType.class, ctx);
+            typeCheck(visit(ctx.getChild(2)), IntType.class, ctx);
             ir.append("\tandl\n");
             return new IntType();
         }
@@ -517,8 +491,11 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         else
         {
             assert (ctx.getChildCount() == 3);
-            visit(ctx.getChild(0));
-            visit(ctx.getChild(2));
+            Type leftType = castToRValue(visit(ctx.getChild(0)), ctx);
+            Type rightType = castToRValue(visit(ctx.getChild(2)), ctx);
+            if (!leftType.equals(rightType))
+                reportError("Diffrent types on two sides of " + ctx.getChild(1).getText(), ctx);
+
             switch (ctx.getChild(1).getText())
             {
                 case "==" :
@@ -545,8 +522,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         else
         {
             assert (ctx.getChildCount() == 3);
-            visit(ctx.getChild(0));
-            visit(ctx.getChild(2));
+            typeCheck(visit(ctx.getChild(0)), IntType.class, ctx);
+            typeCheck(visit(ctx.getChild(2)), IntType.class, ctx);
             switch (ctx.getChild(1).getText())
             {
                 case "<" :
@@ -579,21 +556,57 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         else
         {
             assert (ctx.getChildCount() == 3);
-            visit(ctx.getChild(0));
-            visit(ctx.getChild(2));
+            Type left = castToRValue(visit(ctx.getChild(0)), ctx);
+            Type right = castToRValue(visit(ctx.getChild(2)), ctx);
             switch (ctx.getChild(1).getText())
             {
                 case "+" :
-                    ir.append("\tadd\n");
+                {
+                    if (left instanceof IntType && right instanceof IntType)
+                    {
+                        ir.append("\tadd\n");
+                        return new IntType();
+                    }
+                    // else if (left instanceof IntType && right instanceof PointerType)
+                    // {
+                    // return right;
+                    // }
+                    // else if (left instanceof PointerType && right instanceof IntType)
+                    // {
+                    // return left;
+                    // }
+                    else
+                    {
+                        reportError("Adding a pointer to a pointer", ctx);
+                    }
                     break;
+                }
                 case "-" :
-                    ir.append("\tsub\n");
+                {
+                    if (left instanceof IntType && right instanceof IntType)
+                    {
+                        ir.append("\tsub\n");
+                        return new IntType();
+                    }
+                    // else if (left instanceof IntType && right instanceof PointerType)
+                    // {
+                    // return right;
+                    // }
+                    // else if (left instanceof PointerType && right instanceof IntType)
+                    // {
+                    // return left;
+                    // }
+                    else
+                    {
+                        reportError("Subing a pointer to a pointer", ctx);
+                    }
                     break;
+                }
                 default :
                     assert (false);
                     break;
             }
-            return new IntType();
+            return new NoType();
         }
     }
 
@@ -607,8 +620,8 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         else
         {
             assert (ctx.getChildCount() == 3);
-            visit(ctx.getChild(0));
-            visit(ctx.getChild(2));
+            typeCheck(visit(ctx.getChild(0)), IntType.class, ctx);
+            typeCheck(visit(ctx.getChild(2)), IntType.class, ctx);
             switch (ctx.getChild(1).getText())
             {
                 case "*" :
@@ -637,7 +650,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitUnaryOp(UnaryOpContext ctx)
     {
-        visit(ctx.unary());
+        typeCheck(visit(ctx.unary()), IntType.class, ctx);
 
         switch (ctx.children.get(0).getText())
         {
@@ -659,6 +672,31 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     }
 
     @Override
+    public Type visitUnaryAddr(UnaryAddrContext ctx)
+    {
+        Type type = visit(ctx.unary());
+
+        switch (ctx.getChild(0).getText())
+        {
+            case "*" :
+                return castToRValue(type, ctx).deref();
+            case "&" :
+                return type.ref();
+            default :
+                assert (false);
+                return new NoType();
+        }
+    }
+
+    @Override
+    public Type visitUnaryCast(UnaryCastContext ctx)
+    {
+        Type srcType = visit(ctx.unary());
+        Type dstType = visit(ctx.type());
+        return dstType.valueCast(srcType.valueCat);
+    }
+
+    @Override
     public Type visitPostfix(PostfixContext ctx)
     {
         if (ctx.getChildCount() == 1)
@@ -672,14 +710,19 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
                 reportError("Number of arguments doesn't match with param number", ctx);
 
             for (int i = ctx.expression().size() - 1; i >= 0; i--)
-                visit(ctx.expression(i));
+            {
+                Type t = castToRValue(visit(ctx.expression(i)), ctx);
+                if (!t.equals(func.paramTypes.get(i)))
+                    reportError("The type of argument " + i + " is different from the type of parameter " + i
+                            + " of function " + name, ctx);
+            }
 
             ir.append("\tcall ").append(name).append(' ').append(func.paramTypes.size()).append('\n');
 
             // NOTE: The caller shouldn't pop the arguments.
             // this work is handled by IR-ASM generater.
 
-            return new IntType();
+            return func.returnType;
         }
     }
 
@@ -711,13 +754,11 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
         if (symbol != null)
         {
             ir.append("\tframeaddr ").append(symbol.offset).append('\n');
-            ir.append("\tload\n");
             return symbol.type;
         }
         else if (globDeclared.containsKey(name))
         {
             ir.append("\tglobaladdr ").append(name).append('\n');
-            ir.append("\tload\n");
             return globDeclared.get(name);
         }
         else
@@ -730,8 +771,11 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitType(TypeContext ctx)
     {
-        assert (ctx.getText().equals("int"));
-        return new IntType();
+        int refDepth = ctx.getChildCount() - 1;
+        if (refDepth == 0)
+            return new IntType();
+        else
+            return new PointerType(refDepth);
     }
 
     // NOTE: Visitors Ends Here
@@ -759,6 +803,30 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     {
         localCntr++;
         if (localCntr > frameCntr) frameCntr = localCntr;
+    }
+
+    private Type typeCheck(final Type actual, Class<? extends Type> expected, ValueCat needed, ParserRuleContext ctx)
+    {
+        if (!expected.isAssignableFrom(actual.getClass()))
+            reportError("Type " + actual + " appears, but " + expected.getName() + " is expected", ctx);
+        if (needed == ValueCat.LVALUE && actual.valueCat == ValueCat.RVALUE)
+            reportError("An L-value is needed here", ctx);
+        if (needed == ValueCat.RVALUE && actual.valueCat == ValueCat.LVALUE)
+        {
+            ir.append("\tload\n");
+            return actual.valueCast(ValueCat.RVALUE);
+        }
+        return actual.valueCast(needed);
+    }
+
+    private Type typeCheck(final Type actual, Class<? extends Type> expected, ParserRuleContext ctx)
+    {
+        return typeCheck(actual, expected, ValueCat.RVALUE, ctx);
+    }
+
+    private Type castToRValue(final Type actual, ParserRuleContext ctx)
+    {
+        return typeCheck(actual, Type.class, ValueCat.RVALUE, ctx);
     }
 
     /**
