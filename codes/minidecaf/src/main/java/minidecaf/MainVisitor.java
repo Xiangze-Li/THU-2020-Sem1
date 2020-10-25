@@ -469,7 +469,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
             ir.append("\tstore\n");
 
-            return unaryType;
+            return unaryType.valueCast(ValueCat.RVALUE);
         }
     }
 

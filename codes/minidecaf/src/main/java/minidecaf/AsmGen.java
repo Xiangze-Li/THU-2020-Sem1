@@ -218,7 +218,7 @@ public class AsmGen
         asm.append("\tlw t1,4(sp)\n").append("\tlw t2,0(sp)\n");
         asm.append("\taddi sp,sp,4\n");
         asm.append("\tsw t1,0(t2)\n");
-        asm.append("\tsw t2,0(sp)\n");
+        // asm.append("\tsw t2,0(sp)\n");
     }
 
     private static void doLoad(final StringBuilder asm)
