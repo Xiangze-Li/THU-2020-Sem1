@@ -3,6 +3,7 @@ package minidecaf;
 import minidecaf.MiniDecafParser.*;
 import minidecaf.Type.*;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     }
 
     @Override
-    public Type visitDeclGlobal(DeclGlobalContext ctx)
+    public Type visitDeclGlNaive(DeclGlNaiveContext ctx)
     {
         String name = ctx.IDENT().getText();
         if (funcDeclared.containsKey(name)) reportError("A global variable and a function have the same name", ctx);
@@ -83,6 +84,31 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             }
         }
         globDeclared.put(name, type.valueCast(ValueCat.LVALUE));
+
+        return new NoType();
+    }
+
+    @Override
+    public Type visitDeclGlArray(DeclGlArrayContext ctx)
+    {
+        // TODO + visitDeclGlArray
+        String name = ctx.IDENT().getText();
+        if (funcDeclared.containsKey(name)) reportError("A global variable and a function have the same name", ctx);
+
+        Deque<Type> types = new ArrayDeque<>();
+        types.add(visit(ctx.type()).valueCast(ValueCat.LVALUE));
+        for (int i = ctx.INTEGER().size() - 1; i >= 0; i--)
+        {
+            int x = Integer.parseInt(ctx.INTEGER(i).getText());
+            if (x == 0) reportError("the dimension of array cannot be 0", ctx);
+            types.addFirst(new ArrayType(types.getFirst(), x));
+        }
+
+        Type type = types.getFirst();
+
+        if (globDeclared.containsKey(name) && !globDeclared.get(name).equals(type))
+            reportError("different global variables with same name are declared", ctx);
+        globDeclared.put(name, type);
 
         return new NoType();
     }
@@ -371,7 +397,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     }
 
     @Override
-    public Type visitDeclearation(DeclearationContext ctx)
+    public Type visitDeclLoNaive(DeclLoNaiveContext ctx)
     {
         String name = ctx.IDENT().getText();
         if (symbolTable.peek().get(name) != null) reportError("Re-Declearing an existing variable", ctx);
@@ -391,6 +417,30 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             ir.append("\tstore\n");
             ir.append("\tpop\n");
         }
+
+        return new NoType();
+    }
+
+    @Override
+    public Type visitDeclLoArray(DeclLoArrayContext ctx)
+    {
+        // TODO + visitDeclLoArray
+        String name = ctx.IDENT().getText();
+        if (symbolTable.peek().containsKey(name)) reportError("Re-Declearing an existing variable", ctx);
+
+        Deque<Type> types = new ArrayDeque<>();
+        types.add(visit(ctx.type()).valueCast(ValueCat.LVALUE));
+        for (int i = ctx.INTEGER().size() - 1; i >= 0; i--)
+        {
+            int x = Integer.parseInt(ctx.INTEGER(i).getText());
+            if (x == 0) reportError("the dimension of array cannot be 0", ctx);
+            types.addFirst(new ArrayType(types.getFirst(), x));
+        }
+
+        ArrayType type = (ArrayType) types.getFirst();
+
+        declLocalVar(type.getSize() / 4);
+        symbolTable.peek().put(name, new Symbol(name, localCntr - 1, type));
 
         return new NoType();
     }
@@ -495,6 +545,7 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
             Type rightType = castToRValue(visit(ctx.getChild(2)), ctx);
             if (!leftType.equals(rightType))
                 reportError("Diffrent types on two sides of " + ctx.getChild(1).getText(), ctx);
+            if (leftType instanceof ArrayType) reportError("ArrayType cannot be part of equational opr", ctx);
 
             switch (ctx.getChild(1).getText())
             {
@@ -567,14 +618,16 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
                         ir.append("\tadd\n");
                         return new IntType();
                     }
-                    // else if (left instanceof IntType && right instanceof PointerType)
-                    // {
-                    // return right;
-                    // }
-                    // else if (left instanceof PointerType && right instanceof IntType)
-                    // {
-                    // return left;
-                    // }
+                    else if (left instanceof IntType && right instanceof PointerType)
+                    {
+                        ir.append("\taddip\n");
+                        return right;
+                    }
+                    else if (left instanceof PointerType && right instanceof IntType)
+                    {
+                        ir.append("\taddpi\n");
+                        return left;
+                    }
                     else
                     {
                         reportError("Adding a pointer to a pointer", ctx);
@@ -588,14 +641,16 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
                         ir.append("\tsub\n");
                         return new IntType();
                     }
-                    // else if (left instanceof IntType && right instanceof PointerType)
-                    // {
-                    // return right;
-                    // }
-                    // else if (left instanceof PointerType && right instanceof IntType)
-                    // {
-                    // return left;
-                    // }
+                    else if (left instanceof PointerType && right instanceof IntType)
+                    {
+                        ir.append("\tsubpi\n");
+                        return left;
+                    }
+                    else if (left instanceof PointerType && right.equals(left))
+                    {
+                        ir.append("\tsubpp\n");
+                        return new IntType();
+                    }
                     else
                     {
                         reportError("Subing a pointer to a pointer", ctx);
@@ -697,32 +752,65 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     }
 
     @Override
-    public Type visitPostfix(PostfixContext ctx)
+    public Type visitPfixPrim(PfixPrimContext ctx)
     {
-        if (ctx.getChildCount() == 1)
-            return visit(ctx.primary());
+        return visit(ctx.primary());
+    }
+
+    @Override
+    public Type visitPfixFCall(PfixFCallContext ctx)
+    {
+        String name = ctx.IDENT().getText();
+        Func func = funcDeclared.get(name);
+        if (func == null) reportError("Calling un-declared function", ctx);
+        if (func.paramTypes.size() != ctx.expression().size())
+            reportError("Number of arguments doesn't match with param number", ctx);
+
+        for (int i = ctx.expression().size() - 1; i >= 0; i--)
+        {
+            Type t = castToRValue(visit(ctx.expression(i)), ctx);
+            if (!t.equals(func.paramTypes.get(i)))
+                reportError("The type of argument " + i + " is different from the type of parameter " + i
+                        + " of function " + name, ctx);
+        }
+
+        ir.append("\tcall ").append(name).append(' ').append(func.paramTypes.size()).append('\n');
+
+        // NOTE: The caller shouldn't pop the arguments.
+        // this work is handled by IR-ASM generater.
+
+        return func.returnType;
+    }
+
+    @Override
+    public Type visitPfixSubscri(PfixSubscriContext ctx)
+    {
+        // TODO + visitPfixSubscri
+        Type postfixType = castToRValue(visit(ctx.postfix()), ctx);
+        typeCheck(visit(ctx.expression()), IntType.class, ValueCat.RVALUE, ctx);
+        if (postfixType instanceof PointerType)
+        {
+            // sb.append("# subscript applied to a pointer\n").append("\tslli t1, t1, 2\n").append("\tadd t0, t0,
+            // t1\n");
+            // push("t0");
+            ir.append("\taddpi\n");
+            return postfixType.deref();
+        }
+        else if (postfixType instanceof ArrayType)
+        {
+            Type baseType = ((ArrayType) postfixType).baseType;
+            // sb.append("# subscript applied to an array\n").append("\tli t2, " + baseType.getSize() + "\n")
+            // .append("\tmul t1, t1, t2\n").append("\tadd t0, t0, t1\n");
+            // push("t0");
+            ir.append("\tpush ").append(baseType.getSize() / 4).append('\n');
+            ir.append("\tmul\n");
+            ir.append("\taddpi\n");
+            return baseType;
+        }
         else
         {
-            String name = ctx.IDENT().getText();
-            Func func = funcDeclared.get(name);
-            if (func == null) reportError("Calling un-declared function", ctx);
-            if (func.paramTypes.size() != ctx.expression().size())
-                reportError("Number of arguments doesn't match with param number", ctx);
-
-            for (int i = ctx.expression().size() - 1; i >= 0; i--)
-            {
-                Type t = castToRValue(visit(ctx.expression(i)), ctx);
-                if (!t.equals(func.paramTypes.get(i)))
-                    reportError("The type of argument " + i + " is different from the type of parameter " + i
-                            + " of function " + name, ctx);
-            }
-
-            ir.append("\tcall ").append(name).append(' ').append(func.paramTypes.size()).append('\n');
-
-            // NOTE: The caller shouldn't pop the arguments.
-            // this work is handled by IR-ASM generater.
-
-            return func.returnType;
+            reportError("the subscript operator could only be applied to a pointer or an array", ctx);
+            return new NoType();
         }
     }
 
@@ -801,7 +889,14 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
 
     private void declLocalVar()
     {
-        localCntr++;
+        // localCntr++;
+        // if (localCntr > frameCntr) frameCntr = localCntr;
+        declLocalVar(1);
+    }
+
+    private void declLocalVar(int num)
+    {
+        localCntr += num;
         if (localCntr > frameCntr) frameCntr = localCntr;
     }
 

@@ -183,11 +183,56 @@ public abstract class Type
         @Override
         public Type deref()
         {
-            if (refDepth>1)
+            if (refDepth > 1)
                 return new PointerType(refDepth - 1, ValueCat.LVALUE);
             else
                 return new IntType(ValueCat.LVALUE);
         }
+    }
 
+    public static class ArrayType extends Type
+    {
+        public final Type baseType;
+        public final int size;
+
+        public ArrayType(Type baseType, int length)
+        {
+            super("ArrayType<" + length + ":" + baseType + ">", ValueCat.RVALUE);
+            this.baseType = baseType;
+            this.size = length * baseType.getSize();
+        }
+
+        @Override
+        public boolean equals(Type type)
+        {
+            return type instanceof ArrayType && size == type.getSize() && baseType.equals(((ArrayType) type).baseType);
+        }
+
+        @Override
+        public Type ref()
+        {
+            throw new UnsupportedOperationException("Error: trying referencing array.");
+        }
+
+        @Override
+        public Type deref()
+        {
+            throw new UnsupportedOperationException("Error: trying dereferencing array.");
+        }
+
+        @Override
+        public Type valueCast(ValueCat targetValueCat)
+        {
+            if (targetValueCat == ValueCat.LVALUE)
+                throw new UnsupportedOperationException("Error: an array must be an r-value.");
+            else
+                return this;
+        }
+
+        @Override
+        public int getSize()
+        {
+            return size;
+        }
     }
 }

@@ -87,7 +87,11 @@ public class AsmGen
                     case "le" :
                     case "ge" :
                     case "add" :
+                    case "addip" :
+                    case "addpi" :
                     case "sub" :
+                    case "subpi" :
+                    case "subpp":
                     case "mul" :
                     case "div" :
                     case "rem" :
@@ -265,7 +269,19 @@ public class AsmGen
             case "mul" :
             case "div" :
             case "rem" :
-                asm.append("\t").append(whatOp).append(" t1,t1,t2\n");
+                asm.append('\t').append(whatOp).append(" t1,t1,t2\n");
+                break;
+            case "addip" :
+                asm.append("\tslli t1,t1,2\n").append("\tadd t1,t1,t2\n");
+                break;
+                case "addpi" :
+                asm.append("\tslli t2,t2,2\n").append("\tadd t1,t1,t2\n");
+                break;
+            case "subpi" :
+                asm.append("\tslli t2,t2,2\n").append("\tsub t1,t1,t2\n");
+                break;
+            case "subpp" :
+                asm.append("\tsub t1,t1,t2\n").append("\tsrai t1,t1,2\n");
                 break;
             default :
                 assert (false);

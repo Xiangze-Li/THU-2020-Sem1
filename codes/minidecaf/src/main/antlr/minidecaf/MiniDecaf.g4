@@ -5,7 +5,8 @@ program
     ;
 
 declGlobal
-    : type IDENT ('=' INTEGER)? ';'
+    : type IDENT ('=' INTEGER)? ';'     # declGlNaive
+    | type IDENT ('[' INTEGER ']')+ ';' # declGlArray
     ;
 
 function
@@ -39,7 +40,8 @@ statement
     ;
 
 declearation
-    : type IDENT ('=' expression)? ';'
+    : type IDENT ('=' expression)? ';'  # declLoNaive
+    | type IDENT ('[' INTEGER ']')+ ';' # declLoArray
     ;
 
 expression
@@ -94,8 +96,9 @@ unary
     ;
 
 postfix
-    : primary
-	| IDENT '(' (expression (',' expression)* )? ')'
+    : primary                       # pfixPrim
+	| IDENT '(' (expression (',' expression)* )? ')'    # pfixFCall
+    | postfix '[' expression ']'    # pfixSubscri
     ;
 
 primary
