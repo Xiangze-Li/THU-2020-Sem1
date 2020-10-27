@@ -1,7 +1,7 @@
-人工神经网络/
-信号处理原理/
-编译原理/
-网络原理/
-计组原/
-软件工程/
-.vscode/
+*/
+!codes/
+!notes/
+!writings/
+!.gitignore
+!*.code-workspace
+!*.md
