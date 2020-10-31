@@ -3,9 +3,9 @@
 
 module Decoder
 (
-    input wire[31:0]    inst,
+    input wire [31:0]   inst,
     input wire          flagZ,
-    input wire[2:0]     stage,
+    input wire [2:0]    stage,
 
     output reg          pcWr,
     output reg          pcNowWr,
@@ -14,15 +14,15 @@ module Decoder
     output reg          memWr,
     output reg          memRd,
     output reg          irWr,
-    output reg          mem2Reg,
-    output reg[2:0]     immSel,
+    output reg [2:0]    immSel,
     output reg          regWr,
-    output reg          aluSelA,
-    output reg          aluSelB,
-    output reg          aluOp,
+    output reg [2:0]    regDSel,
+    output reg [2:0]    aluASel,
+    output reg [2:0]    aluBSel,
+    output reg [2:0]    aluOp,
     output reg          aluAlter,
 
-    output reg[2:0]     stageNext
+    output reg [2:0]    stageNext
 );
 
     parameter [2:0]
@@ -49,6 +49,7 @@ module Decoder
         OP_LUI      = 7'b0110111;
 
     parameter [2:0]
+        IMM_N = 3'b000,
         // immSel
         IMM_I = 3'b001,
         IMM_S = 3'b010,

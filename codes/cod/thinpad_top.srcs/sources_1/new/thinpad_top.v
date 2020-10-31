@@ -85,76 +85,112 @@ module thinpad_top
     ClkGen ( clk_50M, reset_btn, clk_10M, clk_25M, rst_10M, rst_25M );
 
     parameter [2:0]
-        // Stages
+    // Stages
+        STDBY = 3'b000,
         IF = 3'b001,
         ID = 3'b010,
         EX = 3'b011,
         ME = 3'b100,
         WB = 3'b101,
         ERR = 3'b111;
-    reg [2:0] stage;
+    reg  [2:0]  stage;
+    wire [2:0]  stageNext;
 
-    reg [31:0] pc;
+    reg  [31:0] pc, pcNow;
+
+    wire        regWr, flagZ,
+                pcWr, pcNowWr, pcSel,
+                memSel, memWr, memRd,
+                irWr;
+    wire [2:0]  immSel, aluASel, aluBSel, regDSel,
+                aluOp, aluAlter;
+    wire [4:0]  rs1, rs2, rd;
+    wire [31:0] immOut,
+                oprandA, oprandB,
+                data2RF, q1, q2, aluResult, dataFrRam,
+                pcSrc,
+                baseA;
+    reg  [31:0] rA, rB, rC,
+                rI, rD;
+
+    assign rs1 = rI[19:15];
+    assign rs2 = rI[24:20];
+    assign rd  = rI[11:07];
+    assign pcSrc = pcSel ? aluResult : rC;
+    assign baseA = memSel ? rC : pc;
+    assign data2RF = regDSel == 2'b00 ? rD :
+                     regDSel == 2'b01 ? rC :
+                     regDSel == 2'b10 ? pc :
+            /* regDSel==3 UNDEFINED */  32'b0;
+    assign oprandA = aluASel == 2'b00 ? pc :
+                     aluASel == 2'b01 ? pcNow :
+                     aluASel == 2'b10 ? rA :
+                     /* 3 UNDEFINED */  32'b0;
+    assign oprandB = aluBSel == 2'b00 ? 32'h4 :
+                     aluBSel == 2'b01 ? rB :
+                     aluBSel == 2'b10 ? immOut :
+                     /* 3 UNDEFINED */  32'b0;
 
     RegFile rf(
-        .clk(),
-        .regWr(),
-        .rs1(),
-        .rs2(),
-        .rd(),
-        .data(),
+        .clk(clk_10M),
+        .regWr(regWr),
+        .rs1(rs1),
+        .rs2(rs2),
+        .rd(rd),
+        .data(data2RF),
 
-        .q1(),
-        .q2()
+        .q1(q1),
+        .q2(q2)
     );
 
     ImmGen imm(
-        .inst(),
-        .immSel(),
+        .inst(rI),
+        .immSel(immSel),
 
-        .immOut()
+        .immOut(immOut)
     );
 
     Decoder dec(
-        .inst(),
-        .flagZ(),
+        .inst(rI),
+        .flagZ(flagZ),
         .stage(stage),
 
-        .pcWr(),
-        .pcNowWr(),
-        .pcSel(),
-        .memSel(),
-        .memWr(),
-        .memRd(),
-        .irWr(),
-        .mem2Reg(),
-        .immSel(),
-        .regWr(),
-        .aluSelA(),
-        .aluSelB(),
-        .aluOp(),
-        .aluAlter(),
+        .pcWr(pcWr),
+        .pcNowWr(pcNowWr),
+        .pcSel(pcSel),
+        .memSel(memSel),
+        .memWr(memWr),
+        .memRd(memRd),
+        .irWr(irWr),
+        .regDSel(regDSel),
+        .immSel(immSel),
+        .regWr(regWr),
+        .aluASel(aluASel),
+        .aluBSel(aluBSel),
+        .aluOp(aluOp),
+        .aluAlter(aluAlter),
 
-        .stageNext()
+        .stageNext(stageNext)
     );
 
     ALU alu(
-        .opCode(),
-        .alter(),
-        .oprandA(),
-        .oprandB(),
+        .opCode(aluOp),
+        .alter(aluAlter),
+        .oprandA(oprandA),
+        .oprandB(oprandB),
 
-        .result(),
-        .flagZero()
+        .result(aluResult),
+        .flagZero(flagZ)
     );
 
     MemController memctrl(
-        .clk(),
+        .clk(clk_10M),
 
-        .baseDIn(),
-        .baseDOut(),
-        .baseWr(),
-        .baseRd(),
+        .baseDIn(rB),
+        .baseDOut(dataFrRam),
+        .baseA(baseA),
+        .baseWr(memWr),
+        .baseRd(memRd),
 
         .baseData(base_ram_data),
         .baseAddr(base_ram_addr),
@@ -175,6 +211,24 @@ module thinpad_top
         .uartTsrE(uart_tsre),
         .uartRdN(uart_rdn),
         .uartWrN(uart_wrn)
-);
+    );
+
+    always @(posedge clk_10M) begin
+        rA <= q1;
+        rB <= q2;
+        rC <= aluResult;
+        rD <= dataFrRam;
+
+        stage <= stageNext;
+
+        if (pcWr)
+            pc <= pcSrc;
+
+        if (pcNowWr)
+            pcNow <= pc;
+
+        if (irWr)
+            rI <= dataFrRam;
+    end
 
 endmodule

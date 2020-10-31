@@ -6,6 +6,7 @@ module MemController
 
     input  wire [31:0]  baseDIn,
     output reg  [31:0]  baseDOut,
+    input  wire [31:0]  baseA,
     input  wire         baseWr,
     input  wire         baseRd,
 
