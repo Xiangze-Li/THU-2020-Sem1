@@ -4,9 +4,10 @@ module ALU
 (
     input wire[2:0] opCode,
     input wire alter,
-    input signed wire[31:0] oprandA,
-    input signed wire[31:0] oprandB,
-    output signed reg[31:0] result,
+    input wire signed [31:0] oprandA,
+    input wire signed [31:0] oprandB,
+
+    output reg signed [31:0] result,
     output wire flagZero
 );
 
@@ -29,15 +30,16 @@ module ALU
     // - NOTE: ALU Logics
     always @(*) begin
         case(opCode)
-            ADD  : result = oprandA + (alter ? ~oprandB + 1 : oprandB);
+            ADD  : result = oprandA + (alter ? -oprandB : oprandB);
             // SLL  : result = oprandA << oprandB[4:0];
+            // TODO: 检查符号比较与无符号比较
             // SLT  : result = (oprandA < oprandB ? 32'b1 : 32'b0);
-            // SLTU : result = ($unsigned(oprandA) < $unsigned(oprandB) ? 32'b1 : 32'0);
+            // SLTU : result = ($unsigned(oprandA) < $unsigned(oprandB) ? 32'b1 : 32'b0);
             // XOR  : result = oprandA ^ oprandB;
             // SRL  : result = (alter ? oprandA >> oprandB[4:0] : oprandA >>> oprandB[4:0]);
             OR   : result = oprandA | oprandB;
             AND  : result = oprandA & oprandB;
-            default: result = 32'b0;
+            default:result = 32'bX;
         endcase
     end
 

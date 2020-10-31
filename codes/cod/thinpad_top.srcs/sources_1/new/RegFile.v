@@ -4,7 +4,6 @@
 module RegFile
 (
     input wire          clk,
-                        rst,
 
     input wire          regWr,
 
@@ -14,27 +13,20 @@ module RegFile
 
     input wire[31:0]    data,
 
-    output reg[31:0]   q1,
+    output wire[31:0]   q1,
                         q2
 );
 
     reg[31:0] Regs[31:0];
 
+
+    assign q1 = Regs[rs1];
+    assign q2 = Regs[rs2];
+
     // TODO: 怀疑此处是否能够使用阻塞赋值,
     // TODO: 检查以下代码生成的电路
-    always @(posedge clk, posedge rst) begin
-        if (rst) begin
-            for (integer i = 0; i<32; i=i+1) begin
-                Regs[i] = 32'b0;
-            end
-            q1 = 32'b0;
-            q2 = 32'b0;
-        end
-        else begin
-            if (regWr) Regs[rd] = data;
-            q1 = Regs[rs1];
-            q2 = Regs[rs2];
-        end
+    always @(posedge clk) begin
+        if (regWr) Regs[rd] = data;
     end
 
 endmodule

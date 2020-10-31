@@ -81,28 +81,100 @@ module thinpad_top
     output wire video_de           //行数据有效信号，用于区分消隐区
 );
 
-    wire[7:0] number;
-    SEG7_LUT segL(.oSEG1(dpy0), .iDIG(number[3:0])); //dpy0是低位数码管
-    SEG7_LUT segH(.oSEG1(dpy1), .iDIG(number[7:4])); //dpy1是高位数码管
+    wire clk_10M, clk_25M, rst_10M, rst_25M;
+    ClkGen ( clk_50M, reset_btn, clk_10M, clk_25M, rst_10M, rst_25M );
 
-    assign base_ram_ce_n = 1'b0;
-    assign base_ram_be_n = 4'b0000;
+    parameter [2:0]
+        // Stages
+        IF = 3'b001,
+        ID = 3'b010,
+        EX = 3'b011,
+        ME = 3'b100,
+        WB = 3'b101,
+        ERR = 3'b111;
+    reg [2:0] stage;
 
-    MemController m(
-        .clk(clk_50M),
-//        .clk(clock_btn),
-        .rst(reset_btn),
-        .seg7disp(number),
-        .base_addr_in(dip_sw[19:0]),
-        .ram_data(base_ram_data),
-        .ram_addr(base_ram_addr),
-        .ram_oe_n(base_ram_oe_n),
-        .ram_we_n(base_ram_we_n),
-        .uart_dataready(uart_dataready),
-        .uart_tbre(uart_tbre),
-        .uart_tsre(uart_tsre),
-        .uart_rdn(uart_rdn),
-        .uart_wrn(uart_wrn)
+    reg [31:0] pc;
+
+    RegFile rf(
+        .clk(),
+        .regWr(),
+        .rs1(),
+        .rs2(),
+        .rd(),
+        .data(),
+
+        .q1(),
+        .q2()
     );
+
+    ImmGen imm(
+        .inst(),
+        .immSel(),
+
+        .immOut()
+    );
+
+    Decoder dec(
+        .inst(),
+        .flagZ(),
+        .stage(stage),
+
+        .pcWr(),
+        .pcNowWr(),
+        .pcSel(),
+        .memSel(),
+        .memWr(),
+        .memRd(),
+        .irWr(),
+        .mem2Reg(),
+        .immSel(),
+        .regWr(),
+        .aluSelA(),
+        .aluSelB(),
+        .aluOp(),
+        .aluAlter(),
+
+        .stageNext()
+    );
+
+    ALU alu(
+        .opCode(),
+        .alter(),
+        .oprandA(),
+        .oprandB(),
+
+        .result(),
+        .flagZero()
+    );
+
+    MemController memctrl(
+        .clk(),
+
+        .baseDIn(),
+        .baseDOut(),
+        .baseWr(),
+        .baseRd(),
+
+        .baseData(base_ram_data),
+        .baseAddr(base_ram_addr),
+        .baseCeN(base_ram_ce_n),
+        .baseBeN(base_ram_be_n),
+        .baseOeN(base_ram_oe_n),
+        .baseWeN(base_ram_we_n),
+
+        .extData(ext_ram_data),
+        .extAddr(ext_ram_addr),
+        .extCeN(ext_ram_ce_n),
+        .extBeN(ext_ram_be_n),
+        .extOeN(ext_ram_oe_n),
+        .extWeN(ext_ram_we_n),
+
+        .uartDataready(uart_dataready),
+        .uartTbrE(uart_tbre),
+        .uartTsrE(uart_tsre),
+        .uartRdN(uart_rdn),
+        .uartWrN(uart_wrn)
+);
 
 endmodule

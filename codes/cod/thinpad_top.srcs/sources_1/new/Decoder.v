@@ -27,6 +27,7 @@ module Decoder
 
     parameter [2:0]
     // Stage
+        STDBY = 3'b000,
         IF = 3'b001,
         ID = 3'b010,
         EX = 3'b011,
@@ -57,6 +58,7 @@ module Decoder
 
     always @(*) begin
     // Countrol Sig. Gen.
+    /*
         case (inst[6:0])
             OP_R    : begin
                 case (stage)
@@ -114,13 +116,18 @@ module Decoder
             // OP_LUI  :
             default:
         endcase
+        */
     end
 
     always @(*) begin
     // Next Stage Gen.
         case (stage)
-            IF : stageNext = ID;
-            ID : stageNext = EX;
+            STDBY :
+                stageNext = IF;
+            IF :
+                stageNext = ID;
+            ID :
+                stageNext = EX;
             EX : begin
                 case (inst[6:0])
                     OP_R, OP_I  : stageNext = WB;
@@ -139,8 +146,10 @@ module Decoder
                     default: stageNext = ERR;
                 endcase
             end
-            WB : stageNext = IF;
+            WB :
+                stageNext = IF;
             default:
+                stageNext = ERR;
         endcase
     end
 

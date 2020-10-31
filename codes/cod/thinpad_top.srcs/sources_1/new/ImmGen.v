@@ -17,11 +17,11 @@ module ImmGen
 
     wire[31:0] immI, immS, immB, immU, immJ;
 
-    assign immI = { 21{inst[31]}, inst[30:25], inst[24:21], inst[20] };
-    assign immS = { 21{inst[31]}, inst[30:25], inst[11:8], inst[7] };
-    assign immB = { 20{inst[31]}, inst[7], inst[30:25], inst[11:8], 1'b0 };
+    assign immI = { {21{inst[31]}}, inst[30:25], inst[24:21], inst[20] };
+    assign immS = { {21{inst[31]}}, inst[30:25], inst[11:8], inst[7] };
+    assign immB = { {20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0 };
     assign immU = { inst[31], inst[30:20], inst[19:12], 12'b0 };
-    assign immJ = { 12{inst[31]}, inst[19:12], inst[20], inst[30:25], inst[24:21], 1'b0 };
+    assign immJ = { {12{inst[31]}}, inst[19:12], inst[20], inst[30:25], inst[24:21], 1'b0 };
 
     always @(*)
         case (immSel)
