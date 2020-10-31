@@ -91,7 +91,6 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitDeclGlArray(DeclGlArrayContext ctx)
     {
-        // TODO + visitDeclGlArray
         String name = ctx.IDENT().getText();
         if (funcDeclared.containsKey(name)) reportError("A global variable and a function have the same name", ctx);
 
@@ -424,7 +423,6 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitDeclLoArray(DeclLoArrayContext ctx)
     {
-        // TODO + visitDeclLoArray
         String name = ctx.IDENT().getText();
         if (symbolTable.peek().containsKey(name)) reportError("Re-Declearing an existing variable", ctx);
 
@@ -785,7 +783,6 @@ public final class MainVisitor extends MiniDecafBaseVisitor<Type>
     @Override
     public Type visitPfixSubscri(PfixSubscriContext ctx)
     {
-        // TODO + visitPfixSubscri
         Type postfixType = castToRValue(visit(ctx.postfix()), ctx);
         typeCheck(visit(ctx.expression()), IntType.class, ValueCat.RVALUE, ctx);
         if (postfixType instanceof PointerType)
