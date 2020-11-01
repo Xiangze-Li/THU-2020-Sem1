@@ -39,7 +39,7 @@ module ALU
             // SRL  : result = (alter ? oprandA >> oprandB[4:0] : oprandA >>> oprandB[4:0]);
             OR   : result = oprandA | oprandB;
             AND  : result = oprandA & oprandB;
-            default:result = 32'bX;
+            default:result = 32'hFFFF_FFFF;
         endcase
     end
 

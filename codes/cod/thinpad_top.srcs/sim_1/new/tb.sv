@@ -47,7 +47,7 @@ wire uart_tsre;          //数据发送完毕标志
 
 
 //Windows需要注意路径分隔符的转义，例如"D:\\foo\\bar.bin"
-parameter BASE_RAM_INIT_FILE = "/tmp/main.bin"; //BaseRAM初始化文件，请修改为实际的绝对路径
+parameter BASE_RAM_INIT_FILE = "D:\\fib.bin"; //BaseRAM初始化文件，请修改为实际的绝对路径
 parameter EXT_RAM_INIT_FILE = "/tmp/eram.bin";    //ExtRAM初始化文件，请修改为实际的绝对路径
 parameter FLASH_INIT_FILE = "/tmp/kernel.elf";    //Flash初始化文件，请修改为实际的绝对路径
 
@@ -56,23 +56,20 @@ assign rxd = 1'b1; //idle state
 
 initial begin
     //在这里可以自定义测试输入序列，例如：
-    dip_sw = 32'h000_00000;
-    touch_btn = 0;
-    #100;
     reset_btn = 1;
     #100;
     reset_btn = 0;
-//    for (integer i = 0; i < 20; i = i+1) begin
-//        #100; //等待100ns
-//        clock_btn = 1; //按下手工时钟按钮
-//        #100; //等待100ns
-//        clock_btn = 0; //松开手工时钟按钮
-//    end
-    // 模拟PC通过串口发送字符
-    cpld.pc_send_byte(8'h32);
-    #1000;
-    cpld.pc_send_byte(8'h33);
-    #1000;
+////    for (integer i = 0; i < 20; i = i+1) begin
+////        #100; //等待100ns
+////        clock_btn = 1; //按下手工时钟按钮
+////        #100; //等待100ns
+////        clock_btn = 0; //松开手工时钟按钮
+////    end
+//    // 模拟PC通过串口发送字符
+//    cpld.pc_send_byte(8'h32);
+//    #1000;
+//    cpld.pc_send_byte(8'h33);
+//    #1000;
 //    cpld.pc_send_byte(8'h34);
 //    #10000;
 end
@@ -181,7 +178,7 @@ x28fxxxp30 #(.FILENAME_MEM(FLASH_INIT_FILE)) flash(
     .VPP('d1800),
     .Info(1'b1));
 
-/*
+
 initial begin
     wait(flash_byte_n == 1'b0);
     $display("8-bit Flash interface is not supported in simulation!");
@@ -232,5 +229,5 @@ initial begin
         ext2.mem_array1[i] = tmp_array[i][0+:8];
     end
 end
-*/
+
 endmodule

@@ -71,14 +71,14 @@ module Decoder
             IF1 : begin
                 pcWr        <= 1'b0;
                 pcNowWr     <= 1'b0;
-                pcSel       <= 1'bX;
+                pcSel       <= 1'b1;
                 memSel      <= 1'b0;
                 memWr       <= 1'b0;
                 memRd       <= 1'b1;
                 irWr        <= 1'b1;
-                regDSel     <= 2'bXX;
+                regDSel     <= 2'b11;
                 regWr       <= 1'b0;
-                immSel      <= 3'bXXX;
+                immSel      <= IMM_N;
                 aluASel     <= 2'b00;
                 aluBSel     <= 2'b00;
                 aluOp       <= 3'b000;
@@ -92,9 +92,9 @@ module Decoder
                 memWr       <= 1'b0;
                 memRd       <= 1'b0;
                 irWr        <= 1'b0;
-                regDSel     <= 2'bXX;
+                regDSel     <= 2'b11;
                 regWr       <= 1'b0;
-                immSel      <= 3'bXXX;
+                immSel      <= IMM_N;
                 aluASel     <= 2'b00;
                 aluBSel     <= 2'b00;
                 aluOp       <= 3'b000;
@@ -103,14 +103,14 @@ module Decoder
             ID : begin
                 pcWr        <= 1'b0;
                 pcNowWr     <= 1'b0;
-                pcSel       <= 1'bX;
+                pcSel       <= 1'b1;
                 memSel      <= 1'b0;
                 memWr       <= 1'b0;
                 memRd       <= 1'b0;
                 irWr        <= 1'b0;
-                regDSel     <= 2'bXX;
+                regDSel     <= 2'b11;
                 regWr       <= 1'b0;
-                immSel      <= 3'bXXX;
+                immSel      <= IMM_B;
                 aluASel     <= 2'b01;
                 aluBSel     <= 2'b10;
                 aluOp       <= 3'b000;
@@ -121,14 +121,14 @@ module Decoder
                     OP_R : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
+                        immSel      <= IMM_N;
                         aluASel     <= 2'b10;
                         aluBSel     <= 2'b01;
                         aluOp       <= funct3;
@@ -137,12 +137,12 @@ module Decoder
                     OP_I : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
                         immSel      <= IMM_I;
                         aluASel     <= 2'b10;
@@ -153,12 +153,12 @@ module Decoder
                     OP_L : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
                         immSel      <= IMM_I;
                         aluASel     <= 2'b10;
@@ -169,12 +169,12 @@ module Decoder
                     OP_S : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
                         immSel      <= IMM_S;
                         aluASel     <= 2'b10;
@@ -186,12 +186,12 @@ module Decoder
                         pcWr        <= flagZ;
                         pcNowWr     <= 1'b0;
                         pcSel       <= 1'b0;
-                        memSel      <= 1'bX;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
-                        immSel      <= 3'bXXX;
+                        regDSel     <= 2'b11;
+                        immSel      <= IMM_B;
                         regWr       <= 1'b0;
                         aluASel     <= 2'b10;
                         aluBSel     <= 2'b01;
@@ -227,48 +227,48 @@ module Decoder
                     OP_S : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
+                        pcSel       <= 1'b1;
                         memSel      <= 1'b1;
-                        memWr       <= 1'b0;
+                        memWr       <= 1'b1;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
-                        aluBSel     <= 2'bXX;
-                        aluOp       <= 3'bXXX;
-                        aluAlter    <= 1'bX;
+                        immSel      <= IMM_S;
+                        aluASel     <= 2'b10;
+                        aluBSel     <= 2'b10;
+                        aluOp       <= 3'b000;
+                        aluAlter    <= 1'b0;
                     end
                     OP_L : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
+                        pcSel       <= 1'b1;
                         memSel      <= 1'b1;
                         memWr       <= 1'b0;
-                        memRd       <= 1'b0;
+                        memRd       <= 1'b1;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
-                        aluBSel     <= 2'bXX;
-                        aluOp       <= 3'bXXX;
-                        aluAlter    <= 1'bX;
+                        immSel      <= IMM_I;
+                        aluASel     <= 2'b10;
+                        aluBSel     <= 2'b10;
+                        aluOp       <= 3'b000;
+                        aluAlter    <= 1'b0;
                     end
                     default : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
-                        aluBSel     <= 2'bXX;
+                        immSel      <= IMM_N;
+                        aluASel     <= 2'b11;
+                        aluBSel     <= 2'b11;
                         aluOp       <= 3'bXXX;
                         aluAlter    <= 1'bX;
                     end
@@ -279,47 +279,47 @@ module Decoder
                     OP_S : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
+                        pcSel       <= 1'b1;
                         memSel      <= 1'b1;
-                        memWr       <= 1'b1;
+                        memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
-                        aluBSel     <= 2'bXX;
-                        aluOp       <= 3'bXXX;
-                        aluAlter    <= 1'bX;
+                        immSel      <= IMM_S;
+                        aluASel     <= 2'b10;
+                        aluBSel     <= 2'b10;
+                        aluOp       <= 3'b000;
+                        aluAlter    <= 1'b0;
                     end
                     OP_L : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
+                        pcSel       <= 1'b1;
                         memSel      <= 1'b1;
                         memWr       <= 1'b0;
-                        memRd       <= 1'b1;
+                        memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
-                        aluBSel     <= 2'bXX;
-                        aluOp       <= 3'bXXX;
-                        aluAlter    <= 1'bX;
+                        immSel      <= IMM_I;
+                        aluASel     <= 2'b10;
+                        aluBSel     <= 2'b10;
+                        aluOp       <= 3'b000;
+                        aluAlter    <= 1'b0;
                     end
                     default : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
+                        immSel      <= IMM_N;
+                        aluASel     <= 2'b11;
                         aluBSel     <= 2'bXX;
                         aluOp       <= 3'bXXX;
                         aluAlter    <= 1'bX;
@@ -331,49 +331,49 @@ module Decoder
                     OP_I, OP_R : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
                         regDSel     <= 2'b01;
                         regWr       <= 1'b1;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
-                        aluBSel     <= 2'bXX;
-                        aluOp       <= 3'bXXX;
-                        aluAlter    <= 1'bX;
+                        immSel      <= IMM_N;
+                        aluASel     <= 2'b11;
+                        aluBSel     <= 2'b11;
+                        aluOp       <= 3'b000;
+                        aluAlter    <= 1'b0;
                     end
                     OP_L : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
                         regDSel     <= 2'b00;
                         regWr       <= 1'b1;
-                        immSel      <= 3'bXXX;
-                        aluASel     <= 2'bXX;
-                        aluBSel     <= 2'bXX;
-                        aluOp       <= 3'bXXX;
-                        aluAlter    <= 1'bX;
+                        immSel      <= IMM_N;
+                        aluASel     <= 2'b11;
+                        aluBSel     <= 2'b11;
+                        aluOp       <= 3'b000;
+                        aluAlter    <= 1'b0;
                     end
                     default : begin
                         pcWr        <= 1'b0;
                         pcNowWr     <= 1'b0;
-                        pcSel       <= 1'bX;
-                        memSel      <= 1'bX;
+                        pcSel       <= 1'b1;
+                        memSel      <= 1'b0;
                         memWr       <= 1'b0;
                         memRd       <= 1'b0;
                         irWr        <= 1'b0;
-                        regDSel     <= 2'bXX;
+                        regDSel     <= 2'b11;
                         regWr       <= 1'b0;
-                        immSel      <= 3'bXXX;
+                        immSel      <= IMM_N;
                         aluASel     <= 2'bXX;
                         aluBSel     <= 2'bXX;
-                        aluOp       <= 3'bXXX;
+                        aluOp       <= 3'b000;
                         aluAlter    <= 1'bX;
                     end
                 endcase
@@ -381,14 +381,14 @@ module Decoder
             default : begin
                 pcWr        <= 1'b0;
                 pcNowWr     <= 1'b0;
-                pcSel       <= 1'bX;
-                memSel      <= 1'bX;
+                pcSel       <= 1'b1;
+                memSel      <= 1'b0;
                 memWr       <= 1'b0;
                 memRd       <= 1'b0;
                 irWr        <= 1'b0;
-                regDSel     <= 2'bXX;
+                regDSel     <= 2'b11;
                 regWr       <= 1'b0;
-                immSel      <= 3'bXXX;
+                immSel      <= IMM_N;
                 aluASel     <= 2'bXX;
                 aluBSel     <= 2'bXX;
                 aluOp       <= 3'bXXX;

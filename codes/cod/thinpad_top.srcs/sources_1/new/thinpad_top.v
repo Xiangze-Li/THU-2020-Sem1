@@ -82,7 +82,7 @@ module thinpad_top
 );
 
     wire clk_10M, clk_25M, rst_10M, rst_25M;
-    ClkGen ( clk_50M, reset_btn, clk_10M, clk_25M, rst_10M, rst_25M );
+    ClkGen clkgen( clk_50M, reset_btn, clk_10M, clk_25M, rst_10M, rst_25M );
 
     parameter [2:0]
     // Stages
@@ -127,26 +127,28 @@ module thinpad_top
             2'b00 : data2RF = rD;
             2'b01 : data2RF = rC;
             2'b10 : data2RF = pc;
-            2'b11 : data2RF = 32'bX;
+            2'b11 : data2RF = 32'b0;
         endcase
 
         case (aluASel)
             2'b00 : oprandA = pc;
             2'b01 : oprandA = pcNow;
             2'b10 : oprandA = rA;
-            2'b11 : oprandA = 32'bX;
+            2'b11 : oprandA = 32'b0;
         endcase
 
         case (aluBSel)
             2'b00 : oprandB = 32'h4;
             2'b01 : oprandB = rB;
             2'b10 : oprandB = immOut;
-            2'b11 : oprandB = 32'bX;
+            2'b11 : oprandB = 32'b0;
         endcase
     end
 
     RegFile rf(
         .clk(clk_10M),
+        .rst(rst_10M),
+
         .regWr(regWr),
         .rs1(rs1),
         .rs2(rs2),
@@ -199,6 +201,7 @@ module thinpad_top
 
     MemController memctrl(
         .clk(clk_50M),
+        .rst(rst_10M),
 
         .baseDIn(rB),
         .baseDOut(dataFrRam),
@@ -206,14 +209,14 @@ module thinpad_top
         .baseWr(memWr),
         .baseRd(memRd),
 
-        .baseData(base_ram_data),
+        .baseIO(base_ram_data),
         .baseAddr(base_ram_addr),
         .baseCeN(base_ram_ce_n),
         .baseBeN(base_ram_be_n),
         .baseOeN(base_ram_oe_n),
         .baseWeN(base_ram_we_n),
 
-        .extData(ext_ram_data),
+        .extIO(ext_ram_data),
         .extAddr(ext_ram_addr),
         .extCeN(ext_ram_ce_n),
         .extBeN(ext_ram_be_n),

@@ -30,7 +30,7 @@ module ImmGen
             IMM_B : immOut = immB;
             IMM_U : immOut = immU;
             IMM_J : immOut = immJ;
-            default:immOut = 32'bX;
+            default:immOut = 32'hFFFF_FFFF;
         endcase
 
 endmodule
