@@ -101,35 +101,49 @@ module thinpad_top
     wire        regWr, flagZ,
                 pcWr, pcNowWr, pcSel,
                 memSel, memWr, memRd,
-                irWr;
-    wire [2:0]  immSel, aluASel, aluBSel, regDSel,
-                aluOp, aluAlter;
+                irWr,
+                aluAlter;
+    wire [1:0]  aluASel, aluBSel, regDSel;
+    wire [2:0]  immSel, aluOp;
     wire [4:0]  rs1, rs2, rd;
     wire [31:0] immOut,
-                oprandA, oprandB,
-                data2RF, q1, q2, aluResult, dataFrRam,
-                pcSrc,
-                baseA;
+                q1, q2, aluResult, dataFrRam,
+                pcSrc, baseA;
     reg  [31:0] rA, rB, rC,
-                rI, rD;
+                rI, rD,
+                data2RF, oprandA, oprandB;
 
     assign rs1 = rI[19:15];
     assign rs2 = rI[24:20];
     assign rd  = rI[11:07];
+
+    // 2-1 MUXs
     assign pcSrc = pcSel ? aluResult : rC;
     assign baseA = memSel ? rC : pc;
-    assign data2RF = regDSel == 2'b00 ? rD :
-                     regDSel == 2'b01 ? rC :
-                     regDSel == 2'b10 ? pc :
-            /* regDSel==3 UNDEFINED */  32'b0;
-    assign oprandA = aluASel == 2'b00 ? pc :
-                     aluASel == 2'b01 ? pcNow :
-                     aluASel == 2'b10 ? rA :
-                     /* 3 UNDEFINED */  32'b0;
-    assign oprandB = aluBSel == 2'b00 ? 32'h4 :
-                     aluBSel == 2'b01 ? rB :
-                     aluBSel == 2'b10 ? immOut :
-                     /* 3 UNDEFINED */  32'b0;
+
+    always @(*) begin
+        // larger MUXs
+        case (regDSel)
+            2'b00 : data2RF = rD;
+            2'b01 : data2RF = rC;
+            2'b10 : data2RF = pc;
+            2'b11 : data2RF = 32'bX;
+        endcase
+
+        case (aluASel)
+            2'b00 : oprandA = pc;
+            2'b01 : oprandA = pcNow;
+            2'b10 : oprandA = rA;
+            2'b11 : oprandA = 32'bX;
+        endcase
+
+        case (aluBSel)
+            2'b00 : oprandB = 32'h4;
+            2'b01 : oprandB = rB;
+            2'b10 : oprandB = immOut;
+            2'b11 : oprandB = 32'bX;
+        endcase
+    end
 
     RegFile rf(
         .clk(clk_10M),
@@ -184,7 +198,7 @@ module thinpad_top
     );
 
     MemController memctrl(
-        .clk(clk_10M),
+        .clk(clk_50M),
 
         .baseDIn(rB),
         .baseDOut(dataFrRam),
@@ -213,22 +227,34 @@ module thinpad_top
         .uartWrN(uart_wrn)
     );
 
-    always @(posedge clk_10M) begin
-        rA <= q1;
-        rB <= q2;
-        rC <= aluResult;
-        rD <= dataFrRam;
+    always @(posedge clk_10M, posedge rst_10M) begin
+        if (rst_10M) begin
+            rA <= 32'b0;
+            rB <= 32'b0;
+            rC <= 32'b0;
+            rD <= 32'b0;
+            pc <= 32'b0;
+            pcNow <= 32'b0;
+            rI <= 32'b0;
+            stage <= STDBY;
+        end
+        else begin
+            rA <= q1;
+            rB <= q2;
+            rC <= aluResult;
+            rD <= dataFrRam;
 
-        stage <= stageNext;
+            stage <= stageNext;
 
-        if (pcWr)
-            pc <= pcSrc;
+            if (pcWr)
+                pc <= pcSrc;
 
-        if (pcNowWr)
-            pcNow <= pc;
+            if (pcNowWr)
+                pcNow <= pc;
 
-        if (irWr)
-            rI <= dataFrRam;
+            if (irWr)
+                rI <= dataFrRam;
+        end
     end
 
 endmodule

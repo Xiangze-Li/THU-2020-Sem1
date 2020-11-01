@@ -39,5 +39,6 @@ module MemController
     assign extOeN = 1'b1;
     assign extWeN = 1'b1;
 
+    assign baseAddr = baseA[21:2];
 
 endmodule
