@@ -14,7 +14,29 @@ extern bool validateIPChecksum(uint8_t *packet, size_t len);
  * @param len 即 packet 的长度，单位为字节
  * @return 校验和无误则返回 true ，有误则返回 false
  */
-bool forward(uint8_t *packet, size_t len) {
-  // TODO:
-  return false;
+bool forward(uint8_t *packet, size_t len)
+{
+    // TODO:
+    if (!validateIPChecksum(packet, len))
+        return false;
+
+    uint16_t oldTTLProto = (uint16_t)(packet[8] << 8) + (uint16_t)(packet[9]);
+    uint16_t oldChecksum = (uint16_t)(packet[10] << 8) + (uint16_t)(packet[11]);
+    uint16_t newTTLProto = 0;
+    uint32_t newChecksum = 0;
+
+    packet[8] -= 1;
+    newTTLProto = (uint16_t)(packet[8] << 8) + (uint16_t)(packet[9]);
+    newChecksum = (~oldChecksum & 0xFFFFu) + (~oldTTLProto & 0xFFFFu) + newTTLProto;
+
+    while (newChecksum > 0xFFFFu)
+    {
+        newChecksum = (newChecksum >> 16) + (newChecksum & 0xFFFFu);
+    }
+    newChecksum = ~newChecksum;
+
+    packet[11] = newChecksum & 0xFFu;
+    packet[10] = (newChecksum >> 8) & 0xFFu;
+
+    return true;
 }
