@@ -5,24 +5,12 @@
 			"path": "."
 		},
 		{
-			"name": "Computer Org & Design",
-			"path": "codes/cod"
-		},
-		{
-			"name": "Compiler",
-			"path": "codes/minidecaf"
-		},
-		{
-			"name": "Network Router",
-			"path": "codes/router"
-		},
-		{
-			"name": "Software Engineering",
-			"path": "codes/se"
-		},
-		{
 			"name": "Writings",
-			"path": "writings"
+			"path": "./writings"
+		},
+		{
+			"name": "RISC-V CPU TeamWork",
+			"path": "./codes/cpu"
 		}
 	],
 	"settings": {
