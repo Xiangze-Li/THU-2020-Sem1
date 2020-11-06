@@ -1,6 +1,7 @@
 #include "rip.h"
 #include <stdint.h>
 #include <stdlib.h>
+#include <cstdio>
 
 /*
   在头文件 rip.h 中定义了结构体 `RipEntry` 和 `RipPacket` 。
@@ -25,9 +26,128 @@
  * Metric 是否在 [1,16] 的区间内，
  * Mask 的二进制是不是连续的 1 与连续的 0 组成等等。
  */
-bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output) {
-  // TODO:
-  return false;
+bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
+{
+    // TODO:
+    uint32_t offset = 0;
+    uint32_t numEntries = 0;
+    RipPacket *rip = output;
+
+    uint16_t headerLen = (packet[0] & 0x0Fu) << 2;
+    uint16_t packetLen = (packet[2] << 8) + packet[3];
+
+    fprintf(stderr, "Info:\n\theaderLen %d\n\tpacketLen %d\n", headerLen, packetLen);
+
+    if (packetLen > len)
+    {
+        fprintf(stderr, "Error:\n\tpacketLen > len\n");
+        return false;
+    }
+
+    uint16_t udpLoadLen = packet[headerLen + 4] << 8 + packet[headerLen + 5] - 8;
+
+    fprintf(stderr, "Info:\n\tudpLoadLen %d\n", udpLoadLen);
+
+    offset = headerLen + 8;
+
+    if (packet[offset] != 1u && packet[offset] != 2u)
+    {
+        fprintf(stderr, "Error:\n\tcommand == %d\n", packet[offset]);
+        return false;
+    }
+    rip->command = packet[offset];
+    if (packet[offset + 1] != 2u)
+    {
+        fprintf(stderr, "Error:\n\tRIP version == %d\n", packet[offset + 1]);
+        return false;
+    }
+    if (packet[offset + 2] || packet[offset + 3])
+    {
+        fprintf(stderr, "Error:\n\tZero not zero\n");
+        return false;
+    }
+    offset += 4;
+
+    if ((packetLen - offset) % 20)
+    {
+        fprintf(stderr, "Error:\n\tPayload not dividable by 20\n");
+        return false;
+    }
+
+    while (offset < packetLen)
+    {
+        fprintf(stderr, "RIP Entry:\n");
+        for (int i = 0; i < 5; i++)
+        {
+            fprintf(stderr, "\t%02x %02x %02x %02x\n", packet[offset + i * 4 + 0], packet[offset + i * 4 + 1], packet[offset + i * 4 + 2], packet[offset + i * 4 + 3]);
+        }
+
+        if (
+            packet[offset] != 0 ||
+            (packet[offset + 1] != 0 && rip->command == 1) ||
+            (packet[offset + 1] != 2 && rip->command == 2) ||
+            packet[offset + 2] != 0 || packet[offset + 3] != 0)
+        {
+            fprintf(stderr, "Error:\n\tRIP entry head\n\t%08x %08x %08x %08x\n", packet[offset], packet[offset + 1], packet[offset + 2], packet[offset + 3]);
+            break;
+        }
+
+        uint32_t addr =
+            (packet[offset + 4] << 0) +
+            (packet[offset + 5] << 8) +
+            (packet[offset + 6] << 16) +
+            (packet[offset + 7] << 24);
+        uint32_t mask =
+            (packet[offset + 8] << 0) +
+            (packet[offset + 9] << 8) +
+            (packet[offset + 10] << 16) +
+            (packet[offset + 11] << 24);
+        uint32_t nexthop =
+            (packet[offset + 12] << 0) +
+            (packet[offset + 13] << 8) +
+            (packet[offset + 14] << 16) +
+            (packet[offset + 15] << 24);
+        uint32_t metric =
+            (packet[offset + 16] << 0) +
+            (packet[offset + 17] << 8) +
+            (packet[offset + 18] << 16) +
+            (packet[offset + 19] << 24);
+        uint32_t metric_alter =
+            (packet[offset + 16] << 24) +
+            (packet[offset + 17] << 16) +
+            (packet[offset + 18] << 8) +
+            (packet[offset + 19] << 0);
+
+        rip->entries[numEntries].addr = addr;
+        rip->entries[numEntries].mask = mask;
+        rip->entries[numEntries].nexthop = nexthop;
+        rip->entries[numEntries].metric = metric;
+
+        fprintf(stderr, "Stored Entry:\n\t%08x\n\t%08x\n\t%08x\n\t%08x\n",
+                addr, mask, nexthop, metric);
+
+        if (metric_alter < 1u || metric_alter > 16u)
+        {
+            fprintf(stderr, "Error:\n\tmetric == %d\n", metric_alter);
+            break;
+        }
+
+        while (mask & 0x00000001u)
+            mask >>= 1;
+
+        if (mask)
+        {
+            fprintf(stderr, "Error:\n\tmask == %08x\n", rip->entries[numEntries].mask);
+            break;
+        }
+
+        offset += 20;
+        numEntries++;
+    }
+
+    rip->numEntries = numEntries;
+
+    return offset == packetLen;
 }
 
 /**
@@ -41,7 +161,30 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output) {
  * 的数据长度和返回值都应该是四个字节的 RIP 头，加上每项 20 字节。
  * 需要注意一些没有保存在 RipPacket 结构体内的数据的填写。
  */
-uint32_t assemble(const RipPacket *rip, uint8_t *buffer) {
-  // TODO:
-  return 0;
+uint32_t assemble(const RipPacket *rip, uint8_t *buffer)
+{
+    // TODO:
+    uint32_t num = rip->numEntries;
+    buffer[0] = rip->command;
+    buffer[1] = 2u;
+    buffer[2] = 0u;
+    buffer[3] = 0u;
+    uint32_t offset = 4;
+    for (int i = 0; i < num; i++)
+    {
+        buffer[offset++] = 0u;
+        buffer[offset++] = (rip->command == 1u ? 0 : 2);
+        buffer[offset++] = 0u;
+        buffer[offset++] = 0u;
+        for (int j = 0; j < 4; j++)
+        {
+            buffer[offset] = rip->entries[i].addr >> (8 * j);
+            buffer[offset + 4] = rip->entries[i].mask >> (8 * j);
+            buffer[offset + 8] = rip->entries[i].nexthop >> (8 * j);
+            buffer[offset + 12] = rip->entries[i].metric >> (8 * j);
+            offset++;
+        }
+        offset += 12;
+    }
+    return offset;
 }
