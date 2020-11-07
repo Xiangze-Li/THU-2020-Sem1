@@ -9,7 +9,6 @@
  */
 bool validateIPChecksum(uint8_t *packet, size_t len)
 {
-    // TODO:
     int headLen = (packet[0] & 0x0F) * 4;
     int sum = 0;
     for (size_t i = 0; i < headLen; i++)

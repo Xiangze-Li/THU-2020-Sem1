@@ -17,7 +17,6 @@ std::vector<RoutingTableEntry> routeTable;
  */
 void update(bool insert, RoutingTableEntry entry)
 {
-    // TODO:
     if (insert)
     {
         bool found = false;
@@ -58,7 +57,6 @@ void update(bool insert, RoutingTableEntry entry)
  */
 bool prefix_query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index)
 {
-    // TODO:
     // fprintf(stderr, ">>>>\tQuerying 0x%08x\n", addr);
 
     *nexthop = 0;
