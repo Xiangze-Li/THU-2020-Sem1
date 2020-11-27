@@ -6,14 +6,14 @@ struct IpHeader
 {
     uint8_t ihl : 4, version : 4;
     uint8_t tos;
-    uint16_t tot_len;
+    uint16_t totLen;
     uint16_t id;
-    uint16_t frag_off;
+    uint16_t fragOff;
     uint8_t ttl;
     uint8_t protocol;
     uint16_t check;
-    uint32_t saddr;
-    uint32_t daddr;
+    uint32_t srcAddr;
+    uint32_t dstAddr;
 } __attribute__((aligned(4)));
 
 struct UdpHeader
