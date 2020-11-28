@@ -7,10 +7,6 @@
 		{
 			"name": "Writings",
 			"path": "./writings"
-		},
-		{
-			"name": "RISC-V CPU TeamWork",
-			"path": "./codes/cpu"
 		}
 	],
 	"settings": {
