@@ -2,10 +2,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <cstdio>
-#include <vector>
 #include <algorithm>
 
-std::vector<RoutingTableEntry> routeTable;
+std::map<RouterKey, RoutingTableEntry> routerTable;
 
 /**
  * @brief 插入/删除一条路由表表项
@@ -17,34 +16,14 @@ std::vector<RoutingTableEntry> routeTable;
  */
 void update(bool insert, RoutingTableEntry entry)
 {
+    RouterKey key = {entry.addr, entry.len};
     if (insert)
-    {
-        bool found = false;
-        for (RoutingTableEntry &e : routeTable)
-        {
-            if (e.addr == entry.addr && e.len == entry.len)
-            {
-                e = entry;
-                found = true;
-                break;
-            }
-        }
-        if (!found)
-        {
-            routeTable.push_back(entry);
-        }
-    }
+        routerTable[key] = entry;
     else // !insert == delete
     {
-        for (size_t i = 0; i < routeTable.size(); i++)
-        {
-            RoutingTableEntry const &e = routeTable[i];
-            if (e.addr == entry.addr && e.len == entry.len)
-            {
-                routeTable.erase(routeTable.begin() + i);
-                break;
-            }
-        }
+        auto found = routerTable.find(key);
+        if (found != routerTable.end())
+            routerTable.erase(found);
     }
 }
 
@@ -57,41 +36,28 @@ void update(bool insert, RoutingTableEntry entry)
  */
 bool prefix_query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index)
 {
-    // fprintf(stderr, ">>>>\tQuerying 0x%08x\n", addr);
+    static auto genMaskedAddr = [](uint32_t addr, uint32_t maskLen) -> uint32_t {
+        return addr & MASK_BE[maskLen];
+    };
 
+    // fprintf(stderr, "Target : 0x%08x\n", addr);
+    // fprintf(stderr, "RoutingTable : \n");
+    // for (const auto & e:routerTable){
+    //     fprintf(stderr, "    0x%08x, %d : 0x%08x, %d\n", e.first.first, e.first.second, e.second.nexthop, e.second.if_index);
+    // }
+
+    for (int len = 32; len >= 0; len--)
+    {
+        uint32_t masked = genMaskedAddr(addr, len);
+        auto found = routerTable.find(RouterKey(masked, len));
+        if (found != routerTable.end())
+        {
+            *if_index = found->second.if_index;
+            *nexthop = found->second.nexthop;
+            return true;
+        }
+    }
     *nexthop = 0;
     *if_index = 0;
-
-    const RoutingTableEntry *foundEntry = nullptr;
-
-    for (const RoutingTableEntry &e : routeTable)
-    {
-        if (e.len==0 && (!foundEntry || foundEntry->len <= 0)){
-            foundEntry = &e;
-            continue;
-        }
-
-        uint32_t mask = ((uint32_t)-1 >> (32 - e.len));
-
-        // fprintf(stderr, "    \tRoute table entry 0x%08x %d; mask 0x%08x\n", e.addr, e.len, mask);
-        // fprintf(stderr, "    \te.addr ^ addr == %08x\n", e.addr ^ addr);
-        if (!(mask & (e.addr ^ addr)))
-        {
-            // fprintf(stderr, "    \tHit.\n");
-            if (!foundEntry || foundEntry->len <= e.len)
-            {
-                foundEntry = &e;
-                // fprintf(stderr, "    \tUpdate.\n");
-            }
-        }
-    }
-
-    if (!foundEntry)
-        return false;
-    else
-    {
-        *nexthop = foundEntry->nexthop;
-        *if_index = foundEntry->if_index;
-        return true;
-    }
+    return false;
 }

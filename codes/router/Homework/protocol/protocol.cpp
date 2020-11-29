@@ -133,7 +133,6 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
 
         while (mask & 0x00000001u)
             mask >>= 1;
-
         if (mask)
         {
             // fprintf(stderr, "Error:\n\tmask == %08x\n", rip->entries[numEntries].mask);
