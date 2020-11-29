@@ -1,19 +1,16 @@
 #include "rip.h"
 #include "router.h"
 #include "router_hal.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 
 #define DEBUG_OUTPUT 1
-
-// #if DEBUG_OUTPUT
-// #include <string>
-// #endif
 
 extern bool validateIPChecksum(uint8_t *packet, size_t len);
 extern void update(bool insert, RoutingTableEntry entry);
@@ -200,15 +197,32 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
+                    static auto popcount = [](uint32_t mask) -> uint32_t {
+                        uint32_t cntr = 0;
+                        while (mask)
+                        {
+                            cntr += mask & 0x1u;
+                            mask >>= 1;
+                        }
+                        return cntr;
+                    };
                     // 3a.2 response, ref. RFC 2453 Section 3.9.2
                     // TODO: update routing table
-                    // new metric = ?
                     // update metric, if_index, nexthop
                     // HINT: handle nexthop = 0 case
-                    // HINT: what is missing from RoutingTableEntry?
-                    // you might want to use `prefix_query` and `update`, but beware of
-                    // the difference between exact match and longest prefix match.
                     // optional: triggered updates ref. RFC 2453 Section 3.10.1
+                    for (size_t i = 0; i < rip.numEntries; i++)
+                    {
+                        const auto &e = rip.entries[i];
+                        uint32_t metric = std::min(ntohl(e.metric)+1, 16u);
+                        uint32_t len = popcount(mask);
+                        uint32_t nexthop = e.nexthop;
+                        if (nexthop == 0)
+                            nexthop = src_addr;
+                        RouterKey key = RouterKey(e.addr, len);
+
+                        auto found = routingTable.find(key);
+                    }
                 }
             }
             else
