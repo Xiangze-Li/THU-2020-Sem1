@@ -12,20 +12,6 @@
 
 #define DEBUG_OUTPUT 1
 
-extern bool validateIPChecksum(uint8_t *packet, size_t len);
-extern void update(bool insert, RoutingTableEntry entry);
-extern bool prefix_query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index);
-extern bool forward(uint8_t *packet, size_t len);
-extern bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output);
-extern uint32_t assemble(const RipPacket *rip, uint8_t *buffer);
-
-uint16_t calChecksum(uint16_t *packet, size_t numBytes);
-void calIpChksum(iphdr *ipHdr);
-void calIcmpChksum(icmp *icmpMsg, size_t headerLen);
-
-void sendRipResp(const macaddr_t &dstMac, uint32_t interface = -1, uint8_t *packet = packet);
-void sendIcmp(uint8_t icmpType, uint8_t icmpCode, uint32_t interface, in_addr_t srcAddr, const macaddr_t &srcMac);
-
 const in_addr_t RIP_MULTICAST_ADDR = 0x090000e0u;
 const macaddr_t RIP_MULTICAST_MAC = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x09};
 
@@ -33,7 +19,7 @@ const macaddr_t RIP_MULTICAST_MAC = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x09};
 void printRouterTable()
 {
     auto size = routerTable.size();
-    fprintf(stderr, "Routing Table: size=%d\n", size);
+    fprintf(stderr, "Routing Table: size=%ld\n", size);
     for (const auto &e : routerTable)
     {
         const auto &ee = e.second;
@@ -79,6 +65,20 @@ in_addr_t addrs[N_IFACE_ON_BOARD] = {0x0100000a, 0x0101000a, 0x0102000a,
                                      0x0103000a};
 #endif
 
+extern bool validateIPChecksum(uint8_t *packet, size_t len);
+extern void update(bool insert, RoutingTableEntry entry);
+extern bool prefix_query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index);
+extern bool forward(uint8_t *packet, size_t len);
+extern bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output);
+extern uint32_t assemble(const RipPacket *rip, uint8_t *buffer);
+
+uint16_t calChecksum(uint16_t *packet, size_t numBytes);
+void calIpChksum(iphdr *ipHdr);
+void calIcmpChksum(icmp *icmpMsg, size_t headerLen);
+
+void sendRipResp(const macaddr_t &dstMac, uint32_t interface = -1u, uint8_t *packet = packet);
+void sendIcmp(uint8_t icmpType, uint8_t icmpCode, uint32_t interface, in_addr_t srcAddr, const macaddr_t &srcMac);
+
 int main(int argc, char *argv[])
 {
     // 0a.
@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
             // HINT: print complete routing table to stdout/stderr for debugging
             // - TODO: send complete routing table to every interface
 
-            #if DEBUG_OUTPUT
+#if DEBUG_OUTPUT
             printRouterTable();
-            #endif
+#endif
 
             sendRipResp(RIP_MULTICAST_MAC);
 
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
                     // - TODO: fill resp
                     // implement split horizon with poisoned reverse
                     // ref. RFC 2453 Section 3.4.3
-                    if (rip.numEntries==1 && rip.entries[0].metric==htonl(16u))
+                    if (rip.numEntries == 1 && rip.entries[0].metric == htonl(16u))
                         sendRipResp(src_mac, if_index, output);
                 }
                 else
@@ -207,39 +207,78 @@ int main(int argc, char *argv[])
                         return cntr;
                     };
                     // 3a.2 response, ref. RFC 2453 Section 3.9.2
-                    // TODO: update routing table
+                    // - TODO: update routing table
                     // update metric, if_index, nexthop
                     // HINT: handle nexthop = 0 case
                     // optional: triggered updates ref. RFC 2453 Section 3.10.1
                     for (size_t i = 0; i < rip.numEntries; i++)
                     {
                         const auto &e = rip.entries[i];
-                        uint32_t metric = std::min(ntohl(e.metric)+1, 16u);
+                        uint32_t metric = std::min(ntohl(e.metric) + 1, 16u);
                         uint32_t len = popcount(mask);
                         uint32_t nexthop = e.nexthop;
                         if (nexthop == 0)
                             nexthop = src_addr;
                         RouterKey key = RouterKey(e.addr, len);
 
-                        auto found = routingTable.find(key);
+                        auto found = routerTable.find(key);
+                        if (found != routerTable.end())
+                        {
+                            auto &entry = found->second;
+                            if ((src_addr == entry.nexthop && metric != entry.metric) || metric < entry.metric)
+                            {
+                                if (metric == 16u)
+                                    routerTable.erase(found);
+                                else
+                                {
+                                    entry.nexthop = nexthop;
+                                    entry.metric = metric;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (metric != 16u)
+                            {
+                                routerTable[key] = {
+                                    .addr = e.addr,
+                                    .len = len,
+                                    .if_index = if_index,
+                                    .nexthop = nexthop,
+                                    .metric = metric,
+                                };
+                            }
+                        }
                     }
+#if DEBUG_OUTPUT
+                    fprintf(stderr, "Router Table Updated\n");
+                    printRouterTable();
+#endif
                 }
             }
             else
             {
                 // not a rip packet
                 // handle icmp echo request packet
-                // TODO: how to determine?
-                if (false)
+                // - TODO: how to determine?
+                if (ipHdr->protocol == IPPROTO_ICMP)
                 {
-                    // construct icmp echo reply
-                    // reply is mostly the same as request,
-                    // you need to:
-                    // 1. swap src ip addr and dst ip addr
-                    // 2. change icmp `type` in header
-                    // 3. set ttl to 64
-                    // 4. re-calculate icmp checksum and ip checksum
-                    // 5. send icmp packet
+                    icmp *icmpMsg = (icmp *)(packet + 20);
+                    if (icmpMsg->icmp_code == ICMP_ECHO)
+                    {
+                        iphdr *ipHdrR = (iphdr *)output;
+                        memcpy(ipHdrR, ipHdr, sizeof(iphdr));
+                        icmp *icmpMsgR = (icmp *)(output + 20);
+                        memcpy(icmpMsgR, icmpMsg, sizeof(icmp));
+
+                        std::swap(ipHdrR->saddr, ipHdrR->daddr);
+                        icmpMsgR->icmp_type = ICMP_ECHOREPLY;
+                        ipHdrR->ttl = 64;
+                        calIpChksum(ipHdrR);
+                        auto totLen = ntohl(ipHdrR->tot_len);
+                        calIcmpChksum(icmpMsgR, totLen - 20);
+                        HAL_SendIPPacket(if_index, output, totLen, src_mac);
+                    }
                 }
             }
         }
@@ -248,37 +287,10 @@ int main(int argc, char *argv[])
             // 3b.1 dst is not me
             // check ttl
             uint8_t ttl = packet[8];
-            if (ttl <= 1)
+            if (ttl <= 1u)
             {
                 // send icmp time to live exceeded to src addr
-                // fill IP header
-                struct ip *ip_header = (struct ip *)output;
-                ip_header->ip_hl = 5;
-                ip_header->ip_v = 4;
-                // - TODO: set tos = 0, id = 0, off = 0, ttl = 64, p = 1(icmp), src and dst
-                // DEBUG: src & dst
-                ip_header->ip_tos = 0;
-                ip_header->ip_id = 0;
-                ip_header->ip_off = 0;
-                ip_header->ip_ttl = 64;
-                ip_header->ip_p = 1;
-                ip_header->ip_src = addrs[if_index];
-                ip_header->ip_dst = src_addr;
-
-                // fill icmp header
-                struct icmphdr *icmp_header = (struct icmphdr *)&output[20];
-                // icmp type = Time Exceeded
-                icmp_header->type = ICMP_TIME_EXCEEDED;
-                // - TODO: icmp code = 0
-                icmp_header->code = 0;
-                // - TODO: fill unused fields with zero
-                icmp_header->un.gateway = 0;
-                // TODO: append "ip header and first 8 bytes of the original payload"
-                // TODO: calculate icmp checksum and ip checksum
-                // icmp_header->checksum = 0;
-                // ip_header->ip_sum = 0;
-                // TODO: send icmp packet
-                HAL_SendIPPacket(if_index, output, /* length */ 0, src_mac);
+                sendIcmp(ICMP_TIME_EXCEEDED, 0, if_index, src_addr, src_mac);
             }
             else
             {
@@ -315,21 +327,7 @@ int main(int argc, char *argv[])
                     // send ICMP Destination Network Unreachable
                     printf("IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
                     // send icmp destination net unreachable to src addr
-                    // fill IP header
-                    struct ip *ip_header = (struct ip *)output;
-                    ip_header->ip_hl = 5;
-                    ip_header->ip_v = 4;
-                    // TODO: set tos = 0, id = 0, off = 0, ttl = 64, p = 1(icmp), src and dst
-
-                    // fill icmp header
-                    struct icmphdr *icmp_header = (struct icmphdr *)&output[20];
-                    // icmp type = Destination Unreachable
-                    icmp_header->type = ICMP_DEST_UNREACH;
-                    // TODO: icmp code = Destination Network Unreachable
-                    // TODO: fill unused fields with zero
-                    // TODO: append "ip header and first 8 bytes of the original payload"
-                    // TODO: calculate icmp checksum and ip checksum
-                    // TODO: send icmp packet
+                    sendIcmp(ICMP_DEST_UNREACH, ICMP_NET_UNREACH, if_index, src_addr, src_mac);
                 }
             }
         }
@@ -364,31 +362,29 @@ void calIcmpChksum(icmp *icmpMsg, size_t headerLen)
     icmpMsg->icmp_cksum = calChecksum((uint16_t *)(icmpMsg), headerLen);
 }
 
-void sendRipResp(const macaddr_t &dstMac, uint32_t interface = -1u, uint8_t *packet = packet)
+void sendRipResp(const macaddr_t &dstMac, uint32_t interface, uint8_t *packet)
 {
     iphdr *ipHdr = (iphdr *)packet;
     *ipHdr = iphdr{
         .ihl = 5,
-        .id = 0,
         .version = 4,
         .tos = 0,
-        .daddr = RIP_MULTICAST_ADDR,
+        .tot_len = 0, //
+        .id = 0,
         .frag_off = 0,
         .ttl = 1,
         .protocol = IPPROTO_UDP,
-        // later
-        .tot_len = 0,
-        .check = 0,
-        .saddr = 0,
+        .check = 0, //
+        .saddr = 0, //
+        .daddr = RIP_MULTICAST_ADDR,
     };
 
     udphdr *udpHdr = (udphdr *)packet + 20;
     *udpHdr = udphdr{
-        .check = 0,
-        .source = htons(520),
-        .dest = htons(520),
-        // later
-        .len = 0,
+        htons(520),
+        htons(520),
+        0, //
+        0,
     };
 
     RipPacket rip;
@@ -401,7 +397,7 @@ void sendRipResp(const macaddr_t &dstMac, uint32_t interface = -1u, uint8_t *pac
         calIpChksum(ipHdr);
         udpHdr->len = htons(totLen - 20);
         HAL_SendIPPacket(if_index, packet, totLen, dstMac);
-    }
+    };
 
     for (size_t i = 0; i < N_IFACE_ON_BOARD; i++)
     {
@@ -417,8 +413,7 @@ void sendRipResp(const macaddr_t &dstMac, uint32_t interface = -1u, uint8_t *pac
                 .addr = r.addr,
                 .mask = MASK_BE[r.len],
                 .nexthop = r.nexthop,
-                .metric = htonl(r.if_index == i ? 16u : r.metric),
-            };
+                .metric = htonl(r.if_index == i ? 16u : r.metric)};
             if (cntr >= RIP_MAX_ENTRY)
             {
                 send(i, cntr);
@@ -444,13 +439,12 @@ void sendIcmp(uint8_t icmpType, uint8_t icmpCode, uint32_t interface, in_addr_t 
         .frag_off = 0,
         .ttl = 64,
         .protocol = IPPROTO_ICMP,
-        .saddr = addrs[interface],
-        .daddr = src_addr,
         .check = 0,
+        .saddr = addrs[interface],
+        .daddr = srcAddr,
     };
     calIpChksum(ipHdr);
-
-    icmphdr *icmpHdr = (icmphdr *)&output[20];
+    icmphdr *icmpHdr = (icmphdr *)(output + 20);
     icmpHdr->type = icmpType;
     icmpHdr->code = icmpCode;
     icmpHdr->un.gateway = 0;
