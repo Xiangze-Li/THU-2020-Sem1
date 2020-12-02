@@ -27,6 +27,17 @@ void printRouterTable()
                 ee.addr, ee.len, ee.nexthop, ee.if_index, ee.metric);
     }
 }
+void printPacket(uint32_t len, uint8_t *packet)
+{
+    // fprintf(stderr, " 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1\n");
+    for (int i = 0; i < len; i++)
+    {
+        fprintf(stderr, "%02x ", packet[i]);
+        if (!((i + 1) % 16))
+            fprintf(stderr, "\n");
+    }
+    fprintf(stderr, "\n");
+}
 #endif
 
 uint8_t packet[2048];
@@ -116,6 +127,7 @@ int main(int argc, char *argv[])
         {
             // ref. RFC 2453 Section 3.8
             printf("5s Timer\n");
+            fprintf(stderr, "=========================================================\n");
             fprintf(stderr, "5s Timer\n");
             // HINT: print complete routing table to stdout/stderr for debugging
             // - TODO: send complete routing table to every interface
@@ -247,34 +259,47 @@ int main(int argc, char *argv[])
                     bool updated = false;
                     for (size_t i = 0; i < rip.numEntries; i++)
                     {
+
                         const auto &e = rip.entries[i];
                         uint32_t metric = std::min(ntohl(e.metric) + 1, 16u);
-                        uint32_t len = popcount(mask);
+                        uint32_t len = popcount(e.mask);
                         uint32_t nexthop = e.nexthop;
                         if (nexthop == 0)
                             nexthop = src_addr;
                         RouterKey key = RouterKey(e.addr, len);
 
+                        // fprintf(stderr, "-   HANDLING: Addr: 0x%08x, MaskLen: %02d, Nexthop: 0x%08x, Interface: %d, Metric: %d ",
+                        //         e.addr, len, nexthop, if_index, metric);
+
                         auto found = routerTable.find(key);
                         if (found != routerTable.end())
                         {
+                            // fprintf(stderr, "> FOUND ");
                             auto &entry = found->second;
                             if ((src_addr == entry.nexthop && metric != entry.metric) || metric < entry.metric)
                             {
                                 if (metric == 16u)
+                                {
+                                    // fprintf(stderr, "> ERASED\n");
                                     routerTable.erase(found);
+                                }
                                 else
                                 {
+                                    // fprintf(stderr, "> UPDATED\n");
                                     entry.nexthop = nexthop;
                                     entry.metric = metric;
                                 }
                                 updated = true;
                             }
+                            // else
+                            //     fprintf(stderr, "> DROPED\n");
                         }
                         else
                         {
+                            // fprintf(stderr, "> NOT FOUND ");
                             if (metric != 16u)
                             {
+                                // fprintf(stderr, "> INSERTED\n");
                                 routerTable[key] = {
                                     .addr = e.addr,
                                     .len = len,
@@ -284,6 +309,8 @@ int main(int argc, char *argv[])
                                 };
                                 updated = true;
                             }
+                            // else
+                            //     fprintf(stderr, "> DROPED\n");
                         }
                     }
 #if DEBUG_OUTPUT
@@ -443,7 +470,7 @@ void sendRipResp(const macaddr_t &dstMac, uint32_t interface, uint8_t *packet)
         .daddr = RIP_MULTICAST_ADDR,
     };
 
-    udphdr *udpHdr = (udphdr *)packet + 20;
+    udphdr *udpHdr = (udphdr *)(packet + 20);
     *udpHdr = udphdr{
         htons(520),
         htons(520),
@@ -459,7 +486,9 @@ void sendRipResp(const macaddr_t &dstMac, uint32_t interface, uint8_t *packet)
         uint16_t totLen = (uint16_t)assemble(&rip, packet + 28) + 20 + 8;
         ipHdr->tot_len = htons(totLen);
         calIpChksum(ipHdr);
-        udpHdr->len = htons(totLen - 20);
+        udpHdr->len = htons((totLen - 20));
+        // if (if_index == 1)
+        //     printPacket(totLen, packet);
         HAL_SendIPPacket(if_index, packet, totLen, dstMac);
     };
 
@@ -478,6 +507,7 @@ void sendRipResp(const macaddr_t &dstMac, uint32_t interface, uint8_t *packet)
                 .mask = MASK_BE[r.len],
                 .nexthop = r.nexthop,
                 .metric = htonl(r.if_index == i ? 16u : r.metric)};
+            cntr++;
             if (cntr >= RIP_MAX_ENTRY)
             {
                 send(i, cntr);
