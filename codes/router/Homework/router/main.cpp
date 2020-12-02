@@ -116,6 +116,7 @@ int main(int argc, char *argv[])
         {
             // ref. RFC 2453 Section 3.8
             printf("5s Timer\n");
+            fprintf(stderr, "5s Timer\n");
             // HINT: print complete routing table to stdout/stderr for debugging
             // - TODO: send complete routing table to every interface
 
@@ -153,10 +154,16 @@ int main(int argc, char *argv[])
             continue;
         }
 
+#if DEBUG_OUTPUT
+        fprintf(stderr, "=========================================================\n");
+        fprintf(stderr, "Packet received\n");
+#endif
+
         // 1. validate
         if (!validateIPChecksum(packet, res))
         {
             printf("Invalid IP Checksum\n");
+            fprintf(stderr, "-   Invalid IP Checksum\n");
             // drop if ip checksum invalid
             continue;
         }
@@ -164,7 +171,10 @@ int main(int argc, char *argv[])
         iphdr *ipHdr = (iphdr *)packet;
         in_addr_t src_addr = ipHdr->saddr;
         in_addr_t dst_addr = ipHdr->daddr;
-        // - TODO: extract src_addr and dst_addr from packet (big endian)
+// - TODO: extract src_addr and dst_addr from packet (big endian)
+#if DEBUG_OUTPUT
+        fprintf(stderr, "-   src_addr: 0x%08x, dst_addr: 0x%08x\n", src_addr, dst_addr);
+#endif
 
         // 2. check whether dst is me
         // - TODO: handle rip multicast address(224.0.0.9)
@@ -177,6 +187,9 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+#if DEBUG_OUTPUT
+        fprintf(stderr, "-   dst_is_me: %d", dst_is_me);
+#endif
 
         if (dst_is_me)
         {
@@ -185,15 +198,32 @@ int main(int argc, char *argv[])
             // check and validate
             if (disassemble(packet, res, &rip))
             {
+#if DEBUG_OUTPUT
+                fprintf(stderr, "-   is RIP packet\n");
+#endif
+
                 if (rip.command == 1)
                 {
+#if DEBUG_OUTPUT
+                    fprintf(stderr, "-   is RIP request\n");
+#endif
+
                     // 3a.3 request, ref. RFC 2453 Section 3.9.1
                     // only need to respond to whole table requests in the lab
                     // - TODO: fill resp
                     // implement split horizon with poisoned reverse
                     // ref. RFC 2453 Section 3.4.3
                     if (rip.numEntries == 1 && rip.entries[0].metric == htonl(16u))
+                    {
+#if DEBUG_OUTPUT
+                        fprintf(stderr, "-   sending RIP response\n");
+#endif
                         sendRipResp(src_mac, if_index, output);
+                    }
+#if DEBUG_OUTPUT
+                    else
+                        fprintf(stderr, "-   not sending RIP resp\n");
+#endif
                 }
                 else
                 {
@@ -251,18 +281,26 @@ int main(int argc, char *argv[])
                         }
                     }
 #if DEBUG_OUTPUT
-                    fprintf(stderr, "Router Table Updated\n");
+                    fprintf(stderr, "-   Router Table Updated\n");
                     printRouterTable();
 #endif
                 }
             }
             else
             {
+#if DEBUG_OUTPUT
+                fprintf(stderr, "-   not RIP packet\n");
+#endif
+
                 // not a rip packet
                 // handle icmp echo request packet
                 // - TODO: how to determine?
                 if (ipHdr->protocol == IPPROTO_ICMP)
                 {
+#if DEBUG_OUTPUT
+                    fprintf(stderr, "-   is ICMP packet");
+#endif
+
                     icmp *icmpMsg = (icmp *)(packet + 20);
                     if (icmpMsg->icmp_code == ICMP_ECHO)
                     {
@@ -278,6 +316,9 @@ int main(int argc, char *argv[])
                         auto totLen = ntohl(ipHdrR->tot_len);
                         calIcmpChksum(icmpMsgR, totLen - 20);
                         HAL_SendIPPacket(if_index, output, totLen, src_mac);
+#if DEBUG_OUTPUT
+                        fprintf(stderr, "-   sending ICMP echo reply");
+#endif
                     }
                 }
             }
@@ -291,6 +332,9 @@ int main(int argc, char *argv[])
             {
                 // send icmp time to live exceeded to src addr
                 sendIcmp(ICMP_TIME_EXCEEDED, 0, if_index, src_addr, src_mac);
+#if DEBUG_OUTPUT
+                fprintf(stderr, "-   sending ICMP time exceeded\n");
+#endif
             }
             else
             {
@@ -313,6 +357,9 @@ int main(int argc, char *argv[])
                         // update ttl and checksum
                         forward(output, res);
                         HAL_SendIPPacket(dest_if, output, res, dest_mac);
+#if DEBUG_OUTPUT
+                        fprintf(stderr, "-   forwarding");
+#endif
                     }
                     else
                     {
@@ -326,6 +373,10 @@ int main(int argc, char *argv[])
                     // not found
                     // send ICMP Destination Network Unreachable
                     printf("IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
+#if DEBUG_OUTPUT
+                    fprintf(stderr, "-   IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
+#endif
+
                     // send icmp destination net unreachable to src addr
                     sendIcmp(ICMP_DEST_UNREACH, ICMP_NET_UNREACH, if_index, src_addr, src_mac);
                 }
