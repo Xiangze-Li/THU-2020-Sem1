@@ -10,7 +10,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 
-#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 
 const in_addr_t RIP_MULTICAST_ADDR = 0x090000e0u;
 const macaddr_t RIP_MULTICAST_MAC = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x09};
@@ -126,13 +126,13 @@ int main(int argc, char *argv[])
         if (time > last_time + 5 * 1000)
         {
             // ref. RFC 2453 Section 3.8
-            printf("5s Timer\n");
-            fprintf(stderr, "=========================================================\n");
-            fprintf(stderr, "5s Timer\n");
             // HINT: print complete routing table to stdout/stderr for debugging
             // - TODO: send complete routing table to every interface
 
 #if DEBUG_OUTPUT
+            // printf("5s Timer\n");
+            fprintf(stderr, "=========================================================\n");
+            fprintf(stderr, "5s Timer\n");
             printRouterTable();
 #endif
 
@@ -174,8 +174,10 @@ int main(int argc, char *argv[])
         // 1. validate
         if (!validateIPChecksum(packet, res))
         {
-            printf("Invalid IP Checksum\n");
+#if DEBUG_OUTPUT
+            // printf("Invalid IP Checksum\n");
             fprintf(stderr, "-   Invalid IP Checksum\n");
+#endif
             // drop if ip checksum invalid
             continue;
         }
@@ -268,38 +270,51 @@ int main(int argc, char *argv[])
                             nexthop = src_addr;
                         RouterKey key = RouterKey(e.addr, len);
 
-                        // fprintf(stderr, "-   HANDLING: Addr: 0x%08x, MaskLen: %02d, Nexthop: 0x%08x, Interface: %d, Metric: %d ",
-                        //         e.addr, len, nexthop, if_index, metric);
-
+#if DEBUG_OUTPUT
+                        fprintf(stderr, "-   HANDLING: Addr: 0x%08x, MaskLen: %02d, Nexthop: 0x%08x, Interface: %d, Metric: %d ",
+                                e.addr, len, nexthop, if_index, metric);
+#endif
                         auto found = routerTable.find(key);
                         if (found != routerTable.end())
                         {
-                            // fprintf(stderr, "> FOUND ");
+#if DEBUG_OUTPUT
+                            fprintf(stderr, "> FOUND ");
+#endif
                             auto &entry = found->second;
                             if ((src_addr == entry.nexthop && metric != entry.metric) || metric < entry.metric)
                             {
                                 if (metric == 16u)
                                 {
-                                    // fprintf(stderr, "> ERASED\n");
+#if DEBUG_OUTPUT
+                                    fprintf(stderr, "> ERASED\n");
+#endif
                                     routerTable.erase(found);
                                 }
                                 else
                                 {
-                                    // fprintf(stderr, "> UPDATED\n");
+#if DEBUG_OUTPUT
+                                    fprintf(stderr, "> UPDATED\n");
+#endif
                                     entry.nexthop = nexthop;
                                     entry.metric = metric;
                                 }
                                 updated = true;
                             }
-                            // else
-                            //     fprintf(stderr, "> DROPED\n");
+#if DEBUG_OUTPUT
+                            else
+                                fprintf(stderr, "> DROPED\n");
+#endif
                         }
                         else
                         {
-                            // fprintf(stderr, "> NOT FOUND ");
+#if DEBUG_OUTPUT
+                            fprintf(stderr, "> NOT FOUND\n");
+#endif
                             if (metric != 16u)
                             {
-                                // fprintf(stderr, "> INSERTED\n");
+#if DEBUG_OUTPUT
+                                fprintf(stderr, "> INSERTED\n");
+#endif
                                 routerTable[key] = {
                                     .addr = e.addr,
                                     .len = len,
@@ -309,8 +324,10 @@ int main(int argc, char *argv[])
                                 };
                                 updated = true;
                             }
-                            // else
-                            //     fprintf(stderr, "> DROPED\n");
+#if DEBUG_OUTPUT
+                            else
+                                fprintf(stderr, "> DROPED\n");
+#endif
                         }
                     }
 #if DEBUG_OUTPUT
@@ -398,22 +415,24 @@ int main(int argc, char *argv[])
                         forward(output, res);
                         HAL_SendIPPacket(dest_if, output, res, dest_mac);
 #if DEBUG_OUTPUT
-                        fprintf(stderr, "-   forwarding");
+                        fprintf(stderr, "-   forwarding\n");
 #endif
                     }
                     else
                     {
                         // not found
                         // you can drop it
-                        printf("ARP not found for nexthop %x\n", nexthop);
+
+                        // printf("ARP not found for nexthop %x\n", nexthop);
+                        fprintf(stderr, "-   ARP not found for nexthop %x\n", nexthop);
                     }
                 }
                 else
                 {
                     // not found
                     // send ICMP Destination Network Unreachable
-                    printf("IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
 #if DEBUG_OUTPUT
+                    // printf("IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
                     fprintf(stderr, "-   IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
 #endif
 
