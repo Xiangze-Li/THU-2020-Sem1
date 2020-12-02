@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
             }
         }
 #if DEBUG_OUTPUT
-        fprintf(stderr, "-   dst_is_me: %d", dst_is_me);
+        fprintf(stderr, "-   dst_is_me: %d\n", dst_is_me);
 #endif
 
         if (dst_is_me)
@@ -227,6 +227,9 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
+#if DEBUG_OUTPUT
+                    fprintf(stderr, "-   is RIP resp\n");
+#endif
                     static auto popcount = [](uint32_t mask) -> uint32_t {
                         uint32_t cntr = 0;
                         while (mask)
@@ -241,6 +244,7 @@ int main(int argc, char *argv[])
                     // update metric, if_index, nexthop
                     // HINT: handle nexthop = 0 case
                     // optional: triggered updates ref. RFC 2453 Section 3.10.1
+                    bool updated = false;
                     for (size_t i = 0; i < rip.numEntries; i++)
                     {
                         const auto &e = rip.entries[i];
@@ -264,6 +268,7 @@ int main(int argc, char *argv[])
                                     entry.nexthop = nexthop;
                                     entry.metric = metric;
                                 }
+                                updated = true;
                             }
                         }
                         else
@@ -277,12 +282,20 @@ int main(int argc, char *argv[])
                                     .nexthop = nexthop,
                                     .metric = metric,
                                 };
+                                updated = true;
                             }
                         }
                     }
 #if DEBUG_OUTPUT
-                    fprintf(stderr, "-   Router Table Updated\n");
-                    printRouterTable();
+                    if (updated)
+                    {
+                        fprintf(stderr, "-   Router Table Updated\n");
+                        printRouterTable();
+                    }
+                    else
+                    {
+                        fprintf(stderr, "-   Router Table NOT Updated\n");
+                    }
 #endif
                 }
             }
