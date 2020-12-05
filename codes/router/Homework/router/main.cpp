@@ -117,6 +117,42 @@ int main(int argc, char *argv[])
         update(true, entry);
     }
 
+    {
+        iphdr *ip = (iphdr *)packet;
+        udphdr *udp = (udphdr *)(packet + 20);
+        RipPacket rip;
+        uint32_t totLen = 20 + 8 + 4 + 20; // 1 entry
+        *ip = iphdr{
+            .ihl = 5,
+            .version = 4,
+            .tos = 0,
+            .tot_len = htons((uint16_t)totLen),
+            .id = 0,
+            .frag_off = 0,
+            .ttl = 1,
+            .protocol = IPPROTO_UDP, // udp
+            .check = 0,              // set later
+            .saddr = 0,              // set later
+            .daddr = RIP_MULTICAST_ADDR,
+        };
+        *udp = udphdr{htons(520), htons(520), htons((uint16_t)(totLen - 20)), 0};
+        rip.command = 1; // request
+        rip.numEntries = 1;
+        rip.entries[0] = RipEntry{
+            .addr = 0, // addr, mask nexthtop not used in a request
+            .mask = 0,
+            .nexthop = 0,
+            .metric = htonl(16u), // infinity
+        };
+        assemble(&rip, packet + 28);
+        for (size_t i = 0; i < N_IFACE_ON_BOARD; ++i)
+        {
+            ip->saddr = addrs[i];
+            calIpChksum(ip);
+            HAL_SendIPPacket(i, packet, totLen, RIP_MULTICAST_MAC);
+        }
+    }
+
     uint64_t last_time = 0;
     while (1)
     {
@@ -355,11 +391,11 @@ int main(int argc, char *argv[])
                 if (ipHdr->protocol == IPPROTO_ICMP)
                 {
 #if DEBUG_OUTPUT
-                    fprintf(stderr, "-   is ICMP packet");
+                    fprintf(stderr, "-   is ICMP packet\n");
 #endif
 
                     icmp *icmpMsg = (icmp *)(packet + 20);
-                    if (icmpMsg->icmp_code == ICMP_ECHO)
+                    if (icmpMsg->icmp_type == ICMP_ECHO)
                     {
                         iphdr *ipHdrR = (iphdr *)output;
                         memcpy(ipHdrR, ipHdr, sizeof(iphdr));
@@ -367,14 +403,14 @@ int main(int argc, char *argv[])
                         memcpy(icmpMsgR, icmpMsg, sizeof(icmp));
 
                         std::swap(ipHdrR->saddr, ipHdrR->daddr);
-                        icmpMsgR->icmp_type = ICMP_ECHOREPLY;
                         ipHdrR->ttl = 64;
+                        icmpMsgR->icmp_type = ICMP_ECHOREPLY;
                         calIpChksum(ipHdrR);
-                        auto totLen = ntohl(ipHdrR->tot_len);
+                        auto totLen = ntohs(ipHdrR->tot_len);
                         calIcmpChksum(icmpMsgR, totLen - 20);
                         HAL_SendIPPacket(if_index, output, totLen, src_mac);
 #if DEBUG_OUTPUT
-                        fprintf(stderr, "-   sending ICMP echo reply");
+                        fprintf(stderr, "-   sending ICMP echo reply\n");
 #endif
                     }
                 }
