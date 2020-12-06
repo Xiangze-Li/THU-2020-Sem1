@@ -301,9 +301,9 @@ int main(int argc, char *argv[])
                         const auto &e = rip.entries[i];
                         uint32_t metric = std::min(ntohl(e.metric) + 1, 16u);
                         uint32_t len = popcount(e.mask);
-                        uint32_t nexthop = e.nexthop;
-                        if (nexthop == 0)
-                            nexthop = src_addr;
+                        uint32_t nexthop = src_addr; // FIX: to be examined
+                        // if (nexthop == 0)
+                        //     nexthop = src_addr;
                         RouterKey key = RouterKey(e.addr, len);
 
 #if DEBUG_OUTPUT
@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
                             fprintf(stderr, "> FOUND ");
 #endif
                             auto &entry = found->second;
-                            if ((src_addr == entry.nexthop && metric != entry.metric) || metric < entry.metric)
+                            if ((nexthop == entry.nexthop && metric != entry.metric) || metric < entry.metric)
                             {
                                 if (metric == 16u)
                                 {
@@ -398,15 +398,18 @@ int main(int argc, char *argv[])
                     if (icmpMsg->icmp_type == ICMP_ECHO)
                     {
                         iphdr *ipHdrR = (iphdr *)output;
-                        memcpy(ipHdrR, ipHdr, sizeof(iphdr));
                         icmp *icmpMsgR = (icmp *)(output + 20);
-                        memcpy(icmpMsgR, icmpMsg, sizeof(icmp));
+                        uint16_t totLen = ntohs(ipHdr->tot_len);
+                        // fprintf(stderr, "-   totLen = %d\n", totLen);
+                        memcpy(output, packet, totLen);
+                        // memcpy(ipHdrR, ipHdr, sizeof(iphdr));
+                        // memcpy(icmpMsgR, icmpMsg, sizeof(icmp));
+                        // memcpy(output + 28, packet, 28 * sizeof(uint8_t));
 
                         std::swap(ipHdrR->saddr, ipHdrR->daddr);
-                        ipHdrR->ttl = 64;
+                        ipHdrR->ttl = 64u;
                         icmpMsgR->icmp_type = ICMP_ECHOREPLY;
                         calIpChksum(ipHdrR);
-                        auto totLen = ntohs(ipHdrR->tot_len);
                         calIcmpChksum(icmpMsgR, totLen - 20);
                         HAL_SendIPPacket(if_index, output, totLen, src_mac);
 #if DEBUG_OUTPUT
@@ -460,7 +463,7 @@ int main(int argc, char *argv[])
                         // you can drop it
 
                         // printf("ARP not found for nexthop %x\n", nexthop);
-                        fprintf(stderr, "-   ARP not found for nexthop %x\n", nexthop);
+                        fprintf(stderr, "-   ARP not found for nexthop %08x\n", nexthop);
                     }
                 }
                 else
@@ -469,7 +472,7 @@ int main(int argc, char *argv[])
                     // send ICMP Destination Network Unreachable
 #if DEBUG_OUTPUT
                     // printf("IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
-                    fprintf(stderr, "-   IP not found in routing table for src %x dst %x\n", src_addr, dst_addr);
+                    fprintf(stderr, "-   IP not found in routing table for src %08x dst %08x\n", src_addr, dst_addr);
 #endif
 
                     // send icmp destination net unreachable to src addr
