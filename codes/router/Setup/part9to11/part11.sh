@@ -2,8 +2,7 @@
 echo "Enable part11"
 set -v
 
-ip l set lo up
-systemctl restart bird
-birdc restart all
-birdc enable part11
-tcpdump -i eth1 -n -l icmp
+ip netns exec PC1 ip l set lo up
+ip netns exec PC1 systemctl restart bird
+ip netns exec PC1 birdc restart all
+ip netns exec PC1 birdc -s bird1.ctl enable part11

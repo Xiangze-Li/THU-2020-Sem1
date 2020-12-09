@@ -2,6 +2,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <cstdio>
+#include <netinet/in.h>
+
+#ifndef NDEBUG
+// #define DEBUG
+#endif
 
 /*
   在头文件 rip.h 中定义了结构体 `RipEntry` 和 `RipPacket` 。
@@ -35,41 +40,55 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
     uint16_t headerLen = (packet[0] & 0x0Fu) << 2;
     uint16_t packetLen = (packet[2] << 8) + packet[3];
 
-    // fprintf(stderr, "Info:\n\theaderLen %d\n\tpacketLen %d\n", headerLen, packetLen);
+#ifdef DEBUG
+    fprintf(stderr, "Info:\n\theaderLen %d\n\tpacketLen %d\n", headerLen, packetLen);
+#endif
 
     if (packetLen > len)
     {
-        // fprintf(stderr, "Error:\n\tpacketLen > len\n");
+#ifdef DEBUG
+        fprintf(stderr, "Error:\n\tpacketLen > len\n");
+#endif
         return false;
     }
 
     uint16_t udpLoadLen = (packet[headerLen + 4] << 8) + packet[headerLen + 5] - 8;
 
-    // fprintf(stderr, "Info:\n\tudpLoadLen %d\n", udpLoadLen);
+#ifdef DEBUG
+    fprintf(stderr, "Info:\n\tudpLoadLen %d\n", udpLoadLen);
+#endif
 
     offset = headerLen + 8;
 
     if (packet[offset] != 1u && packet[offset] != 2u)
     {
-        // fprintf(stderr, "Error:\n\tcommand == %d\n", packet[offset]);
+#ifdef DEBUG
+        fprintf(stderr, "Error:\n\tcommand == %d\n", packet[offset]);
+#endif
         return false;
     }
     rip->command = packet[offset];
     if (packet[offset + 1] != 2u)
     {
-        // fprintf(stderr, "Error:\n\tRIP version == %d\n", packet[offset + 1]);
+#ifdef DEBUG
+        fprintf(stderr, "Error:\n\tRIP version == %d\n", packet[offset + 1]);
+#endif
         return false;
     }
     if (packet[offset + 2] || packet[offset + 3])
     {
-        // fprintf(stderr, "Error:\n\tZero not zero\n");
+#ifdef DEBUG
+        fprintf(stderr, "Error:\n\tZero not zero\n");
+#endif
         return false;
     }
     offset += 4;
 
     if ((packetLen - offset) % 20)
     {
-        // fprintf(stderr, "Error:\n\tPayload not dividable by 20\n");
+#ifdef DEBUG
+        fprintf(stderr, "Error:\n\tPayload not dividable by 20\n");
+#endif
         return false;
     }
 
@@ -87,7 +106,9 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
             (packet[offset + 1] != 2 && rip->command == 2) ||
             packet[offset + 2] != 0 || packet[offset + 3] != 0)
         {
-            // fprintf(stderr, "Error:\n\tRIP entry head\n\t%08x %08x %08x %08x\n", packet[offset], packet[offset + 1], packet[offset + 2], packet[offset + 3]);
+#ifdef DEBUG
+            fprintf(stderr, "Error:\n\tRIP entry head\n\t%08x %08x %08x %08x\n", packet[offset], packet[offset + 1], packet[offset + 2], packet[offset + 3]);
+#endif
             break;
         }
 
@@ -127,15 +148,20 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
 
         if (metric_alter < 1u || metric_alter > 16u)
         {
-            // fprintf(stderr, "Error:\n\tmetric == %d\n", metric_alter);
+#ifdef DEBUG
+            fprintf(stderr, "Error:\n\tmetric == %d\n", metric_alter);
+#endif
             break;
         }
 
-        while (mask & 0x00000001u)
-            mask >>= 1;
+        mask = ntohl(mask);
+        while (mask & 0x80000000u)
+            mask <<= 1;
         if (mask)
         {
-            // fprintf(stderr, "Error:\n\tmask == %08x\n", rip->entries[numEntries].mask);
+#ifdef DEBUG
+            fprintf(stderr, "Error:\n\tmask == %08x\n", rip->entries[numEntries].mask);
+#endif
             break;
         }
 

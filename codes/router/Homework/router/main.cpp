@@ -93,7 +93,7 @@ void sendIcmp(uint8_t icmpType, uint8_t icmpCode, uint32_t interface, in_addr_t 
 int main(int argc, char *argv[])
 {
     // 0a.
-    int res = HAL_Init(1, addrs);
+    int res = HAL_Init(0, addrs);
     if (res < 0)
     {
         return res;
