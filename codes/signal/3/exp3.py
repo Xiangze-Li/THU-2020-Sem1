@@ -15,8 +15,12 @@ signal_sin_25hz = np.sin(x_25hz)
 
 signal_sin = signal_sin_1hz + 0.25 * signal_sin_25hz
 
-h = np.linspace(0, 25, 25)
-h = (np.sin((8 / 15) * np.pi * (h - 8)) / (np.pi * (h - 8))) * (0.5 + 0.5 * np.cos(0.125 * np.pi * (h - 8)))
+FREQ_P = 10
+FREQ_B = 22
+OMEGA_C = (FREQ_P + FREQ_B) * np.pi / fs
+N = 17
+h = np.linspace(-8, 9, 17)
+h = (np.sin(h * OMEGA_C) / (h * np.pi)) * (0.5 + 0.5 * np.cos(2 * h * np.pi / (N-1)))
 
 
 # TODO: 补全这部分代码
@@ -26,8 +30,8 @@ h = (np.sin((8 / 15) * np.pi * (h - 8)) / (np.pi * (h - 8))) * (0.5 + 0.5 * np.c
 # 构建低通滤波器
 # 函数需要返回滤波后的信号
 def filter_fir(input):
-    return np.convolve(input, h, "same")
-
+    return np.convolve(input, h)[:t * fs]
+    # return np.convolve(input, h, "same")
 
 # TODO: 首先正向对信号滤波(此时输出信号有一定相移)
 # 将输出信号反向，再次用该滤波器进行滤波
