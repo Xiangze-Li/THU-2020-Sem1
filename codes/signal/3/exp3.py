@@ -19,8 +19,9 @@ FREQ_P = 10
 FREQ_B = 22
 OMEGA_C = (FREQ_P + FREQ_B) * np.pi / fs
 N = 17
-h = np.linspace(-8, 9, 17)
-h = (np.sin(h * OMEGA_C) / (h * np.pi)) * (0.5 + 0.5 * np.cos(2 * h * np.pi / (N-1)))
+h = np.linspace(-8, 8, 17)
+h = (np.sin(h * OMEGA_C) / (h * np.pi)) * (0.5 + 0.5 * np.cos(2 * h * np.pi / (N - 1)))
+h[8] = OMEGA_C / np.pi
 
 
 # TODO: 补全这部分代码
@@ -30,8 +31,13 @@ h = (np.sin(h * OMEGA_C) / (h * np.pi)) * (0.5 + 0.5 * np.cos(2 * h * np.pi / (N
 # 构建低通滤波器
 # 函数需要返回滤波后的信号
 def filter_fir(input):
-    return np.convolve(input, h)[:t * fs]
-    # return np.convolve(input, h, "same")
+    # return np.convolve(input, h)[:t * fs]
+    tmp = np.convolve(input, h)
+    # for i in range(len(tmp) - t * fs):
+    #    tmp[i] += tmp[t * fs + i]
+    return tmp[:t * fs]
+    # return np.convolve(input, h, " ")
+
 
 # TODO: 首先正向对信号滤波(此时输出信号有一定相移)
 # 将输出信号反向，再次用该滤波器进行滤波
